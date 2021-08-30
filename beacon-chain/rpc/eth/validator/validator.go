@@ -16,7 +16,6 @@ import (
 	"github.com/prysmaticlabs/prysm/beacon-chain/state"
 	statev1 "github.com/prysmaticlabs/prysm/beacon-chain/state/v1"
 	ethpbv1 "github.com/prysmaticlabs/prysm/proto/eth/v1"
-	"github.com/prysmaticlabs/prysm/proto/eth/v2"
 	ethpbv2 "github.com/prysmaticlabs/prysm/proto/eth/v2"
 	"github.com/prysmaticlabs/prysm/proto/migration"
 	ethpbalpha "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
@@ -166,7 +165,7 @@ func (vs *Server) GetProposerDuties(ctx context.Context, req *ethpbv1.ProposerDu
 	}, nil
 }
 
-func (vs *Server) GetSyncCommitteeDuties(ctx context.Context, request *eth.SyncCommitteeDutiesRequest) (*eth.SyncCommitteeDutiesResponse, error) {
+func (vs *Server) GetSyncCommitteeDuties(ctx context.Context, request *ethpbv2.SyncCommitteeDutiesRequest) (*ethpbv2.SyncCommitteeDutiesResponse, error) {
 	panic("implement me")
 }
 
@@ -175,26 +174,51 @@ func (vs *Server) ProduceBlock(ctx context.Context, req *ethpbv1.ProduceBlockReq
 	ctx, span := trace.StartSpan(ctx, "validatorv1.ProduceBlock")
 	defer span.End()
 
-	v1alpha1req := &ethpbalpha.BlockRequest{
-		Slot:         req.Slot,
-		RandaoReveal: req.RandaoReveal,
-		Graffiti:     req.Graffiti,
-	}
-	v1alpha1resp, err := vs.V1Alpha1Server.GetBlock(ctx, v1alpha1req)
+	block, err := vs.v1BeaconBlock(ctx, req)
 	if err != nil {
-		// We simply return err because it's already of a gRPC error type.
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "Could not get block: %v", err)
 	}
-	block, err := migration.V1Alpha1ToV1Block(v1alpha1resp)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Could not prepare beacon block: %v", err)
-	}
-
 	return &ethpbv1.ProduceBlockResponse{Data: block}, nil
 }
 
-func (vs *Server) ProduceBlockV2(ctx context.Context, request *eth.ProduceBlockRequestV2) (*eth.ProduceBlockResponseV2, error) {
-	panic("implement me")
+func (vs *Server) ProduceBlockV2(ctx context.Context, req *ethpbv1.ProduceBlockRequest) (*ethpbv2.ProduceBlockResponseV2, error) {
+	_, span := trace.StartSpan(ctx, "validator.ProduceBlockV2")
+	defer span.End()
+
+	var resp *ethpbv2.ProduceBlockResponseV2
+	epoch := helpers.SlotToEpoch(req.Slot)
+	if epoch < params.BeaconConfig().AltairForkEpoch {
+		block, err := vs.v1BeaconBlock(ctx, req)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "Could not prepare beacon block: %v", err)
+		}
+		resp = &ethpbv2.ProduceBlockResponseV2{
+			Data: &ethpbv2.BeaconBlockContainerV2{
+				Block: &ethpbv2.BeaconBlockContainerV2_Phase0Block{Phase0Block: block},
+			},
+		}
+	} else {
+		v1alpha1req := &ethpbalpha.BlockRequest{
+			Slot:         req.Slot,
+			RandaoReveal: req.RandaoReveal,
+			Graffiti:     req.Graffiti,
+		}
+		v1alpha1resp, err := vs.V1Alpha1Server.GetBlockAltair(ctx, v1alpha1req)
+		if err != nil {
+			// We simply return err because it's already of a gRPC error type.
+			return nil, err
+		}
+		block, err := migration.V1Alpha1BeaconBlockAltairToV2(v1alpha1resp)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "Could not prepare beacon block: %v", err)
+		}
+		resp = &ethpbv2.ProduceBlockResponseV2{
+			Data: &ethpbv2.BeaconBlockContainerV2{
+				Block: &ethpbv2.BeaconBlockContainerV2_AltairBlock{AltairBlock: block},
+			},
+		}
+	}
+	return resp, nil
 }
 
 // ProduceAttestationData requests that the beacon node produces attestation data for
@@ -462,4 +486,17 @@ func v1ValidatorStatusToV1Alpha1(valStatus ethpbv1.ValidatorStatus) ethpbalpha.V
 	default:
 		return ethpbalpha.ValidatorStatus_UNKNOWN_STATUS
 	}
+}
+
+func (vs *Server) v1BeaconBlock(ctx context.Context, req *ethpbv1.ProduceBlockRequest) (*ethpbv1.BeaconBlock, error) {
+	v1alpha1req := &ethpbalpha.BlockRequest{
+		Slot:         req.Slot,
+		RandaoReveal: req.RandaoReveal,
+		Graffiti:     req.Graffiti,
+	}
+	v1alpha1resp, err := vs.V1Alpha1Server.GetBlock(ctx, v1alpha1req)
+	if err != nil {
+		return nil, err
+	}
+	return migration.V1Alpha1ToV1Block(v1alpha1resp)
 }
