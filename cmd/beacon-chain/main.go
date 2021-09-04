@@ -61,6 +61,7 @@ var appFlags = []cli.Flag{
 	flags.WeakSubjectivityCheckpt,
 	flags.Eth1HeaderReqLimit,
 	flags.GenesisStatePath,
+	flags.WeakSubjectivityCheckpointState,
 	flags.MinPeersPerSubnet,
 	cmd.EnableBackupWebhookFlag,
 	cmd.BackupWebhookOutputDir,
