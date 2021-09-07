@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/prysmaticlabs/prysm/beacon-chain/subjectivity"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -78,6 +79,7 @@ type BeaconNode struct {
 	forkChoiceStore   forkchoice.ForkChoicer
 	stateGen          *stategen.State
 	collector         *bcnodeCollector
+	weakSyncService *subjectivity.WeakSyncService
 }
 
 // New creates a new node instance, sets up configuration options, and registers
@@ -123,6 +125,10 @@ func New(cliCtx *cli.Context) (*BeaconNode, error) {
 		return nil, err
 	}
 	if err := beacon.startDB(cliCtx, depositAddress); err != nil {
+		return nil, err
+	}
+
+	if err := beacon.registerWeakSyncService(); err != nil {
 		return nil, err
 	}
 
@@ -349,6 +355,11 @@ func (b *BeaconNode) startDB(cliCtx *cli.Context, depositAddress string) error {
 	log.Infof("Deposit contract: %#x", addr.Bytes())
 
 	return nil
+}
+
+func (b *BeaconNode) registerWeakSyncService() error {
+	b.weakSyncService = subjectivity.NewWeakSyncService()
+	return b.services.RegisterService(svc)
 }
 
 func (b *BeaconNode) startStateGen() {
