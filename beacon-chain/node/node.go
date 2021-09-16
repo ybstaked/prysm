@@ -180,7 +180,7 @@ func New(cliCtx *cli.Context) (*BeaconNode, error) {
 
 	// db.DatabasePath is the path to the containing directory
 	// db.NewDBFilename expands that to the canonical full path using
-	// the same constuction as NewDB()
+	// the same construction as NewDB()
 	c, err := newBeaconNodePromCollector(db.NewDBFilename(beacon.db.DatabasePath()))
 	if err != nil {
 		return nil, err
@@ -359,7 +359,7 @@ func (b *BeaconNode) startDB(cliCtx *cli.Context, depositAddress string) error {
 
 func (b *BeaconNode) registerWeakSyncService() error {
 	b.weakSyncService = subjectivity.NewWeakSyncService()
-	return b.services.RegisterService(svc)
+	return b.services.RegisterService(b.weakSyncService)
 }
 
 func (b *BeaconNode) startStateGen() {

@@ -35,6 +35,7 @@ go_library(
         "//beacon-chain/rpc:go_default_library",
         "//beacon-chain/rpc/apimiddleware:go_default_library",
         "//beacon-chain/state/stategen:go_default_library",
+        "//beacon-chain/subjectivity:go_default_library",
         "//beacon-chain/sync:go_default_library",
         "//beacon-chain/sync/initial-sync:go_default_library",
         "//cmd:go_default_library",
