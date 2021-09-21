@@ -8,6 +8,7 @@ var Commands = []*cli.Command{
 		Aliases: []string{"cpt"},
 		Usage: "commands for managing checkpoint syncing",
 		Subcommands: []*cli.Command{
+			latestCmd,
 			saveCmd,
 		},
 	},

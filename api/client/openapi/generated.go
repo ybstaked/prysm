@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
@@ -17,6 +19,10 @@ import (
 )
 
 const GET_WEAK_SUBJECTIVITY_CHECKPOINT_PATH = "/eth/v1alpha1/beacon/weak_subjectivity_checkpoint"
+const GET_SIGNED_BLOCK_PATH = "/eth/v2/beacon/blocks"
+const GET_STATE_PATH = "/eth/v2/debug/beacon/states"
+
+const SLOTS_PER_EPOCH = 32
 
 type ClientOpt func(*Client)
 
@@ -65,10 +71,12 @@ func (c *Client) GetWeakSubjectivityCheckpoint() (*ethpb.WeakSubjectivityCheckpo
 	if err != nil {
 		return nil, err
 	}
+	if r.StatusCode != http.StatusOK {
+		return nil, non200Err(r)
+	}
 	v := &WSCResponse{}
 	b := bytes.NewBuffer(nil)
 	bodyReader := io.TeeReader(r.Body, b)
-	log.Printf("%s\n", b.String())
 	err = json.NewDecoder(bodyReader).Decode(v)
 	if err != nil {
 		return nil, err
@@ -90,4 +98,97 @@ func (c *Client) GetWeakSubjectivityCheckpoint() (*ethpb.WeakSubjectivityCheckpo
 		BlockRoot: blockRoot,
 		StateRoot: stateRoot,
 	}, nil
+}
+
+func (c *Client) GetBlockByRoot(blockHex string) (*ethpb.SignedBeaconBlock, error) {
+	blockPath := path.Join(GET_SIGNED_BLOCK_PATH, blockHex)
+	u := c.urlForPath(blockPath)
+	log.Printf("requesting %s", u.String())
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", "application/octet-stream")
+	r, err := c.c.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if r.StatusCode != http.StatusOK {
+		return nil, non200Err(r)
+	}
+
+	v:= &ethpb.SignedBeaconBlock{}
+	b := new(bytes.Buffer)
+	_, err = b.ReadFrom(r.Body)
+	if err != nil {
+		return nil, err
+	}
+	err = v.UnmarshalSSZ(b.Bytes())
+	return v, err
+}
+
+func (c *Client) GetStateByRoot(stateHex string) (*ethpb.BeaconStateAltair, error) {
+	statePath := path.Join(GET_STATE_PATH, stateHex)
+	u := c.urlForPath(statePath)
+	log.Printf("requesting %s", u.String())
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", "application/octet-stream")
+	r, err := c.c.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if r.StatusCode != http.StatusOK {
+		return nil, non200Err(r)
+	}
+
+	v := &ethpb.BeaconStateAltair{}
+	b := new(bytes.Buffer)
+	_, err = b.ReadFrom(r.Body)
+	if err != nil {
+		return nil, err
+	}
+	err = v.UnmarshalSSZ(b.Bytes())
+	return v, err
+}
+
+func (c *Client) GetStateByEpoch(epoch int) (*ethpb.BeaconStateAltair, error) {
+	slot := epoch * SLOTS_PER_EPOCH
+	statePath := path.Join(GET_STATE_PATH, strconv.Itoa(slot))
+	u := c.urlForPath(statePath)
+	log.Printf("requesting %s", u.String())
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", "application/octet-stream")
+	r, err := c.c.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if r.StatusCode != http.StatusOK {
+		return nil, non200Err(r)
+	}
+
+	v := &ethpb.BeaconStateAltair{}
+	b := new(bytes.Buffer)
+	_, err = b.ReadFrom(r.Body)
+	if err != nil {
+		return nil, err
+	}
+	err = v.UnmarshalSSZ(b.Bytes())
+	return v, err
+}
+
+func non200Err(response *http.Response) error {
+	bodyBytes, err := ioutil.ReadAll(response.Body)
+	var body string
+	if err != nil {
+		body = "(Unable to read response body.)"
+	} else {
+		body = "response body:\n" + string(bodyBytes)
+	}
+	return fmt.Errorf("Got non-200 status code = %d requesting %s. %s", response.StatusCode, response.Request.URL, body)
 }
