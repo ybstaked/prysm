@@ -52,7 +52,7 @@ func TestValidateBeaconBlockPubSub_InvalidSignature(t *testing.T) {
 	require.NoError(t, db.SaveStateSummary(ctx, &ethpb.StateSummary{Root: bRoot[:]}))
 	copied := beaconState.Copy()
 	require.NoError(t, copied.SetSlot(1))
-	proposerIdx, err := helpers.BeaconProposerIndex(copied)
+	proposerIdx, err := helpers.BeaconProposerIndex(ctx, copied)
 	require.NoError(t, err)
 	msg := testutil.NewBeaconBlock()
 	msg.Block.ParentRoot = bRoot[:]
@@ -143,7 +143,7 @@ func TestValidateBeaconBlockPubSub_CanRecoverStateSummary(t *testing.T) {
 	require.NoError(t, db.SaveState(ctx, beaconState, bRoot))
 	copied := beaconState.Copy()
 	require.NoError(t, copied.SetSlot(1))
-	proposerIdx, err := helpers.BeaconProposerIndex(copied)
+	proposerIdx, err := helpers.BeaconProposerIndex(ctx, copied)
 	require.NoError(t, err)
 	msg := testutil.NewBeaconBlock()
 	msg.Block.ParentRoot = bRoot[:]
@@ -205,7 +205,7 @@ func TestValidateBeaconBlockPubSub_ValidProposerSignature(t *testing.T) {
 	require.NoError(t, db.SaveStateSummary(ctx, &ethpb.StateSummary{Root: bRoot[:]}))
 	copied := beaconState.Copy()
 	require.NoError(t, copied.SetSlot(1))
-	proposerIdx, err := helpers.BeaconProposerIndex(copied)
+	proposerIdx, err := helpers.BeaconProposerIndex(ctx, copied)
 	require.NoError(t, err)
 	msg := testutil.NewBeaconBlock()
 	msg.Block.ParentRoot = bRoot[:]
@@ -270,7 +270,7 @@ func TestValidateBeaconBlockPubSub_WithLookahead(t *testing.T) {
 	blkSlot := params.BeaconConfig().SlotsPerEpoch.Mul(uint64(core.NextEpoch(copied)))
 	copied, err = transition.ProcessSlots(context.Background(), copied, blkSlot)
 	require.NoError(t, err)
-	proposerIdx, err := helpers.BeaconProposerIndex(copied)
+	proposerIdx, err := helpers.BeaconProposerIndex(ctx, copied)
 	require.NoError(t, err)
 	msg := testutil.NewBeaconBlock()
 	msg.Block.ProposerIndex = proposerIdx
@@ -335,7 +335,7 @@ func TestValidateBeaconBlockPubSub_AdvanceEpochsForState(t *testing.T) {
 	blkSlot := params.BeaconConfig().SlotsPerEpoch * 2
 	copied, err = transition.ProcessSlots(context.Background(), copied, blkSlot)
 	require.NoError(t, err)
-	proposerIdx, err := helpers.BeaconProposerIndex(copied)
+	proposerIdx, err := helpers.BeaconProposerIndex(ctx, copied)
 	require.NoError(t, err)
 	msg := testutil.NewBeaconBlock()
 	msg.Block.ProposerIndex = proposerIdx
@@ -437,7 +437,7 @@ func TestValidateBeaconBlockPubSub_AcceptBlocksFromNearFuture(t *testing.T) {
 	require.NoError(t, db.SaveStateSummary(ctx, &ethpb.StateSummary{Root: bRoot[:]}))
 	copied := beaconState.Copy()
 	require.NoError(t, copied.SetSlot(1))
-	proposerIdx, err := helpers.BeaconProposerIndex(copied)
+	proposerIdx, err := helpers.BeaconProposerIndex(ctx, copied)
 	require.NoError(t, err)
 
 	msg := testutil.NewBeaconBlock()
@@ -588,7 +588,7 @@ func TestValidateBeaconBlockPubSub_SeenProposerSlot(t *testing.T) {
 	bRoot, err := parentBlock.Block.HashTreeRoot()
 	require.NoError(t, err)
 	require.NoError(t, db.SaveState(ctx, beaconState, bRoot))
-	proposerIdx, err := helpers.BeaconProposerIndex(beaconState)
+	proposerIdx, err := helpers.BeaconProposerIndex(ctx, beaconState)
 	require.NoError(t, err)
 
 	msg := testutil.NewBeaconBlock()
@@ -707,7 +707,7 @@ func TestValidateBeaconBlockPubSub_ParentNotFinalizedDescendant(t *testing.T) {
 	require.NoError(t, db.SaveStateSummary(ctx, &ethpb.StateSummary{Root: bRoot[:]}))
 	copied := beaconState.Copy()
 	require.NoError(t, copied.SetSlot(1))
-	proposerIdx, err := helpers.BeaconProposerIndex(copied)
+	proposerIdx, err := helpers.BeaconProposerIndex(ctx, copied)
 	require.NoError(t, err)
 	msg := testutil.NewBeaconBlock()
 	msg.Block.Slot = 1
@@ -769,7 +769,7 @@ func TestValidateBeaconBlockPubSub_InvalidParentBlock(t *testing.T) {
 	require.NoError(t, db.SaveStateSummary(ctx, &ethpb.StateSummary{Root: bRoot[:]}))
 	copied := beaconState.Copy()
 	require.NoError(t, copied.SetSlot(1))
-	proposerIdx, err := helpers.BeaconProposerIndex(copied)
+	proposerIdx, err := helpers.BeaconProposerIndex(ctx, copied)
 	require.NoError(t, err)
 	msg := testutil.NewBeaconBlock()
 	msg.Block.ProposerIndex = proposerIdx
@@ -817,7 +817,7 @@ func TestValidateBeaconBlockPubSub_InvalidParentBlock(t *testing.T) {
 	assert.Equal(t, false, result)
 
 	require.NoError(t, copied.SetSlot(2))
-	proposerIdx, err = helpers.BeaconProposerIndex(copied)
+	proposerIdx, err = helpers.BeaconProposerIndex(ctx, copied)
 	require.NoError(t, err)
 
 	msg = testutil.NewBeaconBlock()
@@ -858,7 +858,7 @@ func TestValidateBeaconBlockPubSub_RejectEvilBlocksFromFuture(t *testing.T) {
 	blkSlot := params.BeaconConfig().SlotsPerEpoch * 2
 	copied, err = transition.ProcessSlots(context.Background(), copied, blkSlot)
 	require.NoError(t, err)
-	proposerIdx, err := helpers.BeaconProposerIndex(copied)
+	proposerIdx, err := helpers.BeaconProposerIndex(ctx, copied)
 	require.NoError(t, err)
 
 	msg := testutil.NewBeaconBlock()
