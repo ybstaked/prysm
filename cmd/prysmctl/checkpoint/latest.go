@@ -50,7 +50,10 @@ func cliActionLatest(c *cli.Context) error {
 		return err
 	}
 	log.Printf("host-port=%s", validatedHost)
-	client := openapi.NewClient(validatedHost, opts...)
+	client, err := openapi.NewClient(validatedHost, opts...)
+	if err !=  nil {
+		return err
+	}
 	wsc, err := client.GetWeakSubjectivityCheckpoint()
 	if err != nil {
 		return err

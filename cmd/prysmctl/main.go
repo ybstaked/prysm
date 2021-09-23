@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/prysmaticlabs/prysm/cmd/prysmctl/get"
 	"os"
 
 	log "github.com/sirupsen/logrus"
@@ -23,4 +24,5 @@ func main() {
 
 func init() {
 	prysmctlCommands = append(prysmctlCommands, checkpoint.Commands...)
+	prysmctlCommands = append(prysmctlCommands, get.Commands...)
 }

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"path"
@@ -18,7 +19,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const GET_WEAK_SUBJECTIVITY_CHECKPOINT_PATH = "/eth/v1alpha1/beacon/weak_subjectivity_checkpoint"
+const GET_WEAK_SUBJECTIVITY_CHECKPOINT_SLOT_PATH = "/internal/eth/v1alpha1/beacon/weak_subjectivity_checkpoint"
+const GET_WEAK_SUBJECTIVITY_CHECKPOINT_PATH = "/internal/eth/v1alpha1/beacon/weak_subjectivity_checkpoint"
 const GET_SIGNED_BLOCK_PATH = "/eth/v2/beacon/blocks"
 const GET_STATE_PATH = "/eth/v2/debug/beacon/states"
 
@@ -47,7 +49,11 @@ func (c *Client) urlForPath(methodPath string) *url.URL {
 	return u
 }
 
-func NewClient(host string, opts ...ClientOpt) *Client {
+func NewClient(host string, opts ...ClientOpt) (*Client, error) {
+	host, err := validHostname(host)
+	if err != nil {
+		return nil, err
+	}
 	c := &Client{
 		c: &http.Client{},
 		scheme: "http",
@@ -56,7 +62,39 @@ func NewClient(host string, opts ...ClientOpt) *Client {
 	for _, o := range opts {
 		o(c)
 	}
-	return c
+	return c, nil
+}
+
+func validHostname(h string) (string, error){
+	// try to parse as url (being permissive)
+	u, err := url.Parse(h)
+	if err == nil && u.Host != "" {
+		return u.Host, nil
+	}
+	// try to parse as host:port
+	host, port, err := net.SplitHostPort(h)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s:%s", host, port), nil
+}
+
+type checkpointSlotResponse struct {
+	Slot uint64
+}
+
+func (c *Client) GetWeakSubjectivityCheckpointSlot() (uint64, error) {
+	u := c.urlForPath(GET_WEAK_SUBJECTIVITY_CHECKPOINT_SLOT_PATH)
+	r, err := c.c.Get(u.String())
+	if err != nil {
+		return 0, err
+	}
+	if r.StatusCode != http.StatusOK {
+		return 0, non200Err(r)
+	}
+	jsonr := &checkpointSlotResponse{}
+	err = json.NewDecoder(r.Body).Decode(jsonr)
+	return jsonr.Slot, err
 }
 
 type WSCResponse struct {

@@ -551,8 +551,8 @@ func (bs *Server) chainHeadRetrieval(ctx context.Context) (*ethpb.ChainHead, err
 	}, nil
 }
 
-// GetWeakSubjectivityCheckpointSlot only computes the slot for the weak subjectivity checkpoint.
-func (bs *Server) GetWeakSubjectivityCheckpointSlot(ctx context.Context, _ *emptypb.Empty) (*ethpb.WeakSubjectivityCheckpointSlot, error) {
+// GetWeakSubjectivityCheckpointEpoch only computes the epoch for the weak subjectivity checkpoint.
+func (bs *Server) GetWeakSubjectivityCheckpointEpoch(ctx context.Context, _ *emptypb.Empty) (*ethpb.WeakSubjectivityCheckpointEpoch, error) {
 	hs, err := bs.HeadFetcher.HeadState(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "Could not get head state")
@@ -561,13 +561,9 @@ func (bs *Server) GetWeakSubjectivityCheckpointSlot(ctx context.Context, _ *empt
 	if err != nil {
 		return nil, status.Error(codes.Internal, "Could not get weak subjectivity epoch")
 	}
-	wsSlot, err := core.StartSlot(wsEpoch)
-	if err != nil {
-		return nil, status.Error(codes.Internal, "Could not get weak subjectivity slot")
-	}
 
-	return &ethpb.WeakSubjectivityCheckpointSlot{
-		Slot: uint64(wsSlot),
+	return &ethpb.WeakSubjectivityCheckpointEpoch{
+		Epoch: uint64(wsEpoch),
 	}, nil
 }
 
