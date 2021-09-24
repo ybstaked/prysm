@@ -3,12 +3,13 @@ package helpers
 import (
 	"bytes"
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	types "github.com/prysmaticlabs/eth2-types"
-	"github.com/prysmaticlabs/prysm/beacon-chain/cache"
+	"github.com/prysmaticlabs/prysm/async"
 	"github.com/prysmaticlabs/prysm/beacon-chain/core"
 	"github.com/prysmaticlabs/prysm/beacon-chain/state"
 	"github.com/prysmaticlabs/prysm/config/params"
@@ -16,7 +17,6 @@ import (
 	"github.com/prysmaticlabs/prysm/crypto/hash"
 	"github.com/prysmaticlabs/prysm/encoding/bytesutil"
 	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	log "github.com/sirupsen/logrus"
 )
 
 var CommitteeCacheInProgressHit = promauto.NewCounter(prometheus.CounterOpts{
@@ -88,6 +88,10 @@ func ActiveValidatorIndices(ctx context.Context, s state.ReadOnlyBeaconState, ep
 	if err != nil {
 		return nil, errors.Wrap(err, "could not get seed")
 	}
+	mLock := async.NewMultilock(fmt.Sprintf("%s-%s", "committee", string(seed[:])))
+	mLock.Lock()
+	defer mLock.Unlock()
+
 	activeIndices, err := committeeCache.ActiveIndices(ctx, seed)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not interface with committee cache")
@@ -95,26 +99,6 @@ func ActiveValidatorIndices(ctx context.Context, s state.ReadOnlyBeaconState, ep
 	if activeIndices != nil {
 		return activeIndices, nil
 	}
-
-	if err := committeeCache.MarkInProgress(seed); err != nil {
-		if errors.Is(err, cache.ErrAlreadyInProgress) {
-			activeIndices, err := committeeCache.ActiveIndices(ctx, seed)
-			if err != nil {
-				return nil, err
-			}
-			if activeIndices == nil {
-				return nil, errors.New("nil active indices")
-			}
-			CommitteeCacheInProgressHit.Inc()
-			return activeIndices, nil
-		}
-		return nil, errors.Wrap(err, "could not mark committee cache as in progress")
-	}
-	defer func() {
-		if err := committeeCache.MarkNotInProgress(seed); err != nil {
-			log.WithError(err).Error("Could not mark cache not in progress")
-		}
-	}()
 
 	var indices []types.ValidatorIndex
 	if err := s.ReadFromEveryValidator(func(idx int, val state.ReadOnlyValidator) error {
@@ -140,6 +124,9 @@ func ActiveValidatorCount(ctx context.Context, s state.ReadOnlyBeaconState, epoc
 	if err != nil {
 		return 0, errors.Wrap(err, "could not get seed")
 	}
+	mLock := async.NewMultilock(fmt.Sprintf("%s-%s", "committee", string(seed[:])))
+	mLock.Lock()
+	defer mLock.Unlock()
 	activeCount, err := committeeCache.ActiveIndicesCount(ctx, seed)
 	if err != nil {
 		return 0, errors.Wrap(err, "could not interface with committee cache")
@@ -147,23 +134,6 @@ func ActiveValidatorCount(ctx context.Context, s state.ReadOnlyBeaconState, epoc
 	if activeCount != 0 && s.Slot() != 0 {
 		return uint64(activeCount), nil
 	}
-
-	if err := committeeCache.MarkInProgress(seed); err != nil {
-		if errors.Is(err, cache.ErrAlreadyInProgress) {
-			activeCount, err := committeeCache.ActiveIndicesCount(ctx, seed)
-			if err != nil {
-				return 0, err
-			}
-			CommitteeCacheInProgressHit.Inc()
-			return uint64(activeCount), nil
-		}
-		return 0, errors.Wrap(err, "could not mark committee cache as in progress")
-	}
-	defer func() {
-		if err := committeeCache.MarkNotInProgress(seed); err != nil {
-			log.WithError(err).Error("Could not mark cache not in progress")
-		}
-	}()
 
 	count := uint64(0)
 	if err := s.ReadFromEveryValidator(func(idx int, val state.ReadOnlyValidator) error {

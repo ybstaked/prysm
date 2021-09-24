@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	types "github.com/prysmaticlabs/eth2-types"
 	"github.com/prysmaticlabs/go-bitfield"
+	"github.com/prysmaticlabs/prysm/async"
 	"github.com/prysmaticlabs/prysm/beacon-chain/cache"
 	"github.com/prysmaticlabs/prysm/beacon-chain/core"
 	"github.com/prysmaticlabs/prysm/beacon-chain/state"
@@ -119,6 +120,9 @@ func BeaconCommittee(
 	slot types.Slot,
 	committeeIndex types.CommitteeIndex,
 ) ([]types.ValidatorIndex, error) {
+	mLock := async.NewMultilock(fmt.Sprintf("%s-%s", "committee", string(seed[:])))
+	mLock.Lock()
+	defer mLock.Unlock()
 	committee, err := committeeCache.Committee(ctx, slot, seed, committeeIndex)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not interface with committee cache")

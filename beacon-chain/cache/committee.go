@@ -6,9 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
 	"sync"
-	"time"
 
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/prometheus/client_golang/prometheus"
@@ -64,10 +62,6 @@ func NewCommitteesCache() *CommitteeCache {
 // Committee fetches the shuffled indices by slot and committee index. Every list of indices
 // represent one committee. Returns true if the list exists with slot and committee index. Otherwise returns false, nil.
 func (c *CommitteeCache) Committee(ctx context.Context, slot types.Slot, seed [32]byte, index types.CommitteeIndex) ([]types.ValidatorIndex, error) {
-	if err := c.checkInProgress(ctx, seed); err != nil {
-		return nil, err
-	}
-
 	obj, exists := c.CommitteeCache.Get(key(seed))
 	if exists {
 		CommitteeCacheHit.Inc()
@@ -114,9 +108,6 @@ func (c *CommitteeCache) AddCommitteeShuffledList(committees *Committees) error 
 
 // ActiveIndices returns the active indices of a given seed stored in cache.
 func (c *CommitteeCache) ActiveIndices(ctx context.Context, seed [32]byte) ([]types.ValidatorIndex, error) {
-	if err := c.checkInProgress(ctx, seed); err != nil {
-		return nil, err
-	}
 	obj, exists := c.CommitteeCache.Get(key(seed))
 
 	if exists {
@@ -137,10 +128,6 @@ func (c *CommitteeCache) ActiveIndices(ctx context.Context, seed [32]byte) ([]ty
 
 // ActiveIndicesCount returns the active indices count of a given seed stored in cache.
 func (c *CommitteeCache) ActiveIndicesCount(ctx context.Context, seed [32]byte) (int, error) {
-	if err := c.checkInProgress(ctx, seed); err != nil {
-		return 0, err
-	}
-
 	obj, exists := c.CommitteeCache.Get(key(seed))
 	if exists {
 		CommitteeCacheHit.Inc()
@@ -163,29 +150,6 @@ func (c *CommitteeCache) HasEntry(seed string) bool {
 	return ok
 }
 
-// MarkInProgress a request so that any other similar requests will block on
-// Get until MarkNotInProgress is called.
-func (c *CommitteeCache) MarkInProgress(seed [32]byte) error {
-	c.lock.Lock()
-	defer c.lock.Unlock()
-	s := key(seed)
-	if c.inProgress[s] {
-		return ErrAlreadyInProgress
-	}
-	c.inProgress[s] = true
-	return nil
-}
-
-// MarkNotInProgress will release the lock on a given request. This should be
-// called after put.
-func (c *CommitteeCache) MarkNotInProgress(seed [32]byte) error {
-	c.lock.Lock()
-	defer c.lock.Unlock()
-	s := key(seed)
-	delete(c.inProgress, s)
-	return nil
-}
-
 func startEndIndices(c *Committees, index uint64) (uint64, uint64) {
 	validatorCount := uint64(len(c.ShuffledIndices))
 	start := slice.SplitOffset(validatorCount, c.CommitteeCount, index)
@@ -199,29 +163,4 @@ func startEndIndices(c *Committees, index uint64) (uint64, uint64) {
 // https://github.com/ethereum/consensus-specs/blob/v0.9.3/specs/core/0_beacon-chain.md#get_seed
 func key(seed [32]byte) string {
 	return string(seed[:])
-}
-
-func (c *CommitteeCache) checkInProgress(ctx context.Context, seed [32]byte) error {
-	delay := minDelay
-	// Another identical request may be in progress already. Let's wait until
-	// any in progress request resolves or our timeout is exceeded.
-	for {
-		if ctx.Err() != nil {
-			return ctx.Err()
-		}
-
-		c.lock.RLock()
-		if !c.inProgress[key(seed)] {
-			c.lock.RUnlock()
-			break
-		}
-		c.lock.RUnlock()
-
-		// This increasing backoff is to decrease the CPU cycles while waiting
-		// for the in progress boolean to flip to false.
-		time.Sleep(time.Duration(delay) * time.Nanosecond)
-		delay *= delayFactor
-		delay = math.Min(delay, maxDelay)
-	}
-	return nil
 }
