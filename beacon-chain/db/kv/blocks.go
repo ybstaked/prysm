@@ -362,14 +362,14 @@ func (s *Store) WeakSubjectivityInitialBlockRoot(ctx context.Context) ([32]byte,
 	return blockRoot, err
 }
 
-// SaveWeakSubjectivityInitialBlockRoot saves the latest block header from the weak subjectivity
+// SaveCheckpointInitialBlockRoot saves the latest block header from the weak subjectivity
 // initial sync state.
-func (s *Store) SaveWeakSubjectivityInitialBlockRoot(ctx context.Context, blockRoot [32]byte) error {
-	ctx, span := trace.StartSpan(ctx, "BeaconDB.SaveWeakSubjectivityInitialBlockRoot")
+func (s *Store) SaveCheckpointInitialBlockRoot(ctx context.Context, blockRoot [32]byte) error {
+	ctx, span := trace.StartSpan(ctx, "BeaconDB.SaveCheckpointInitialBlockRoot")
 	defer span.End()
 	return s.db.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket(blocksBucket)
-		return bucket.Put(wssInitialBlockRootKey, blockRoot[:])
+		return bucket.Put(checkpointBlockKey, blockRoot[:])
 	})
 }
 

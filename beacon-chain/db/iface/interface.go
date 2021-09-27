@@ -107,9 +107,8 @@ type HeadAccessDatabase interface {
 	SaveGenesisData(ctx context.Context, state state.BeaconState) error
 	EnsureEmbeddedGenesis(ctx context.Context) error
 
-	// Move Head to a given state.
-	SaveStateToHead(context.Context, state.BeaconState) error
-	SaveWeakSubjectivityState(context.Context, io.Reader) error
+	// db support for checkpoint sync
+	SaveCheckpointInitialState(ctx context.Context, state io.Reader, block io.Reader) error
 }
 
 // SlasherDatabase interface for persisting data related to detecting slashable offenses on Ethereum.

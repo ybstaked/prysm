@@ -17,13 +17,12 @@ var saveFlags = struct{
 	BlockHex string
 	BlockSavePath string
 	StateHex string
-	StateSavePath string
 	Epoch int
 }{}
 
 var saveCmd = &cli.Command{
 	Name: "save",
-	Usage: "Given a block_root+epoch, save the corresponding block and state ssz-encoded values to disk. To be used for checkpoint sync.",
+	Usage: "query for the current weak subjectivity period epoch, then download the corresponding state and block. To be used for checkpoint sync.",
 	Action: cliActionSave,
 	Flags: []cli.Flag{
 		&cli.StringFlag{
@@ -42,16 +41,6 @@ var saveCmd = &cli.Command{
 			Usage: "instead of state-root, epoch can be used to find the BeaconState for the slot at the epoch boundary.",
 			Destination: &saveFlags.Epoch,
 		},
-		&cli.StringFlag{
-			Name: "state-root",
-			Usage: "instead of epoch, state root (in 0x hex string format) can be used to retrieve from the beacon-node and save locally.",
-			Destination: &saveFlags.StateHex,
-		},
-		&cli.StringFlag{
-			Name: "state-save-path",
-			Usage: "path to file where state root should be saved if specified. defaults to `state-<state_root>.ssz`",
-			Destination: &saveFlags.StateSavePath,
-		},
 	},
 }
 
@@ -69,42 +58,24 @@ func cliActionSave(c *cli.Context) error {
 		return err
 	}
 
-
-	if f.StateHex != "" {
-		if err := saveStateByRoot(client, saveFlags.StateHex, saveFlags.StateSavePath); err != nil {
-			return err
-		}
-	} else if f.Epoch > 0 {
-		if err := saveStateByEpoch(client, saveFlags.Epoch, saveFlags.StateSavePath); err != nil {
-			return err
-		}
+	if saveFlags.Epoch > 0 {
+		return saveCheckpointByEpoch(client, uint64(saveFlags.Epoch))
 	}
 
-	return nil
+	return saveCheckpoint(client)
 }
 
-func saveStateByRoot(client *openapi.Client, root, path string) error {
-	state, err := client.GetStateByRoot(root)
+func saveCheckpoint(client *openapi.Client) error {
+	epoch, err := client.GetWeakSubjectivityCheckpointEpoch()
 	if err != nil {
 		return err
 	}
-	stateRoot, err := state.HashTreeRoot()
-	if err != nil {
-		return err
-	}
-	log.Printf("retrieved state for checkpoint, w/ root=%s", hexutil.Encode(stateRoot[:]))
-	if path == "" {
-		path = fmt.Sprintf("state-%s.ssz", root)
-	}
-	log.Printf("saving to %s...", path)
-	blockBytes, err := state.MarshalSSZ()
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(path, blockBytes, 0644)
+
+	log.Printf("Beacon node computes the current weak subjectivity checkpoint as epoch = %d", epoch)
+	return saveCheckpointByEpoch(client, epoch)
 }
 
-func saveStateByEpoch(client *openapi.Client, epoch int, path string) error {
+func saveCheckpointByEpoch(client *openapi.Client, epoch uint64) error {
 	state, err := client.GetStateByEpoch(epoch)
 	if err != nil {
 		return err
@@ -114,13 +85,43 @@ func saveStateByEpoch(client *openapi.Client, epoch int, path string) error {
 		return err
 	}
 	log.Printf("retrieved state for checkpoint, w/ root=%s", hexutil.Encode(stateRoot[:]))
-	if path == "" {
-		path = fmt.Sprintf("state-%s.ssz", hexutil.Encode(stateRoot[:]))
-	}
-	log.Printf("saving to %s...", path)
-	blockBytes, err := state.MarshalSSZ()
+
+	sb, err := state.MarshalSSZ()
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, blockBytes, 0644)
+
+	statePath := fmt.Sprintf("state-%s.ssz", hexutil.Encode(stateRoot[:]))
+	log.Printf("saving ssz-encoded state to to %s", statePath)
+	err = os.WriteFile(statePath, sb, 0644)
+	if err != nil {
+		return err
+	}
+
+	blockRoot, err := state.LatestBlockHeader.HashTreeRoot()
+	if err != nil {
+		return err
+	}
+	blockRootHex := hexutil.Encode(blockRoot[:])
+
+	block, err := client.GetBlockByRoot(blockRootHex)
+	log.Printf("retrieved block by root=%s", hexutil.Encode(blockRoot[:]))
+
+	blockPath := fmt.Sprintf("block-%s.ssz", blockRootHex)
+	bb, err := block.MarshalSSZ()
+	if err != nil {
+		return err
+	}
+	log.Printf("saving ssz-encoded block to to %s", statePath)
+
+	err = os.WriteFile(blockPath, bb, 0644)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("To validate that your client is using this checkpoint, specify the following flag when starting prysm:")
+	fmt.Printf("--weak-subjectivity-checkpoint=%s:%d\n\n", blockRootHex, epoch)
+	fmt.Println("To sync a new beacon node starting from the checkpoint state, you may specify the following flags (assuming the files are in your current working directory)")
+	fmt.Printf("--checkpoint-state=%s --checkpoint-block=%s\n", statePath, blockPath)
+	return nil
 }

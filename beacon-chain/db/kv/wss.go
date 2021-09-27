@@ -3,28 +3,64 @@ package kv
 import (
 	"context"
 	"github.com/pkg/errors"
+	types "github.com/prysmaticlabs/eth2-types"
 	"github.com/prysmaticlabs/prysm/beacon-chain/state"
-	statev1 "github.com/prysmaticlabs/prysm/beacon-chain/state/v1"
+	statev2 "github.com/prysmaticlabs/prysm/beacon-chain/state/v2"
+	"github.com/prysmaticlabs/prysm/config/params"
 	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
+	"github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1/wrapper"
 	"io"
+	"io/ioutil"
 )
+
+const SLOTS_PER_EPOCH = 32
 
 // SaveStateToHead sets the current head state.
 func (s *Store) SaveStateToHead(ctx context.Context, bs state.BeaconState) error {
-	/*
-	// TODO: fork version of the initial state will not match the fork version from genesis
-	// do we need to do similar validation to the initialize-from-genesis-state code?
-	// bail out early if the fork version doesn't match built-in genesis fork version
-	if !bytes.Equal(bs.Fork().CurrentVersion, params.BeaconConfig().GenesisForkVersion) {
-		return fmt.Errorf("loaded state's fork version (%#x) does not match config genesis "+
-			"fork version (%#x)", bs.Fork().CurrentVersion, params.BeaconConfig().GenesisForkVersion)
-	}
-	 */
 
-	blockRoot, err := bs.LatestBlockHeader().HashTreeRoot()
+
+	return nil
+}
+
+// SaveInitialCheckpointState loads an ssz serialized BeaconState from an io.Reader
+// (ex: an open file) and sets the given state to the head of the chain.
+func (s *Store) SaveCheckpointInitialState(ctx context.Context, stateReader io.Reader, blockReader io.Reader) error {
+	// save block to database
+	blk := &ethpb.SignedBeaconBlockAltair{}
+	bb, err := ioutil.ReadAll(blockReader)
 	if err != nil {
-		return errors.Wrap(err, "could not compute HashTreeRoot of LatestBlockHeader")
+		return err
 	}
+	if err := blk.UnmarshalSSZ(bb); err != nil {
+		return errors.Wrap(err, "could not unmarshal checkpoint block")
+	}
+	wblk, err := wrapper.WrappedAltairSignedBeaconBlock(blk)
+	if err != nil {
+		return errors.Wrap(err, "could not wrap checkpoint block")
+	}
+	if err := s.SaveBlock(ctx, wblk); err != nil {
+		return errors.Wrap(err, "could not save checkpoint block")
+	}
+	blockRoot, err := blk.Block.HashTreeRoot()
+	if err != nil {
+		return errors.Wrap(err, "could not compute HashTreeRoot of checkpoint block")
+	}
+
+	bs, err := statev2.InitializeFromSSZReader(stateReader)
+	if err != nil {
+		return errors.Wrap(err, "could not initialize checkpoint state from reader")
+	}
+
+	/*
+		// TODO: fork version of the initial state will not match the fork version from genesis
+		// do we need to do similar validation to the initialize-from-genesis-state code?
+		// bail out early if the fork version doesn't match built-in genesis fork version
+		if !bytes.Equal(bs.Fork().CurrentVersion, params.BeaconConfig().GenesisForkVersion) {
+			return fmt.Errorf("loaded state's fork version (%#x) does not match config genesis "+
+				"fork version (%#x)", bs.Fork().CurrentVersion, params.BeaconConfig().GenesisForkVersion)
+		}
+	*/
+
 	if err = s.SaveState(ctx, bs, blockRoot); err != nil {
 		return errors.Wrap(err, "could not save state")
 	}
@@ -37,23 +73,24 @@ func (s *Store) SaveStateToHead(ctx context.Context, bs state.BeaconState) error
 	if err = s.SaveHeadBlockRoot(ctx, blockRoot); err != nil {
 		return errors.Wrap(err, "could not save head block root")
 	}
-	if err = s.SaveWeakSubjectivityInitialBlockRoot(ctx, blockRoot); err != nil {
+	if err = s.SaveCheckpointInitialBlockRoot(ctx, blockRoot); err != nil {
 		return err
 	}
-	// TODO:
-	// save head block root -- before or after sync?
-	// genesis block root -- how is this used? when we don't have a genesis, what breaks?
 
-	return nil
-}
-
-// SaveWeakSubjectivityState loads an ssz serialized BeaconState from an io.Reader
-// (ex: an open file) and sets the given state to the head of the chain.
-func (s *Store) SaveWeakSubjectivityState(ctx context.Context, r io.Reader) error {
-	bs, err := statev1.InitializeFromSSZReader(r)
+	slotEpoch, err := blk.Block.Slot.SafeDivSlot(params.BeaconConfig().SlotsPerEpoch)
 	if err != nil {
 		return err
 	}
+	chkpt := &ethpb.Checkpoint{
+		Epoch: types.Epoch(slotEpoch),
+		Root: blockRoot[:],
+	}
+	if err = s.SaveJustifiedCheckpoint(ctx, chkpt); err != nil {
+		return errors.Wrap(err, "could not mark checkpoint sync block as justified")
+	}
+	if err = s.SaveFinalizedCheckpoint(ctx, chkpt); err != nil {
+		return errors.Wrap(err, "could not mark checkpoint sync block as finalized")
+	}
 
-	return s.SaveStateToHead(ctx, bs)
+	return nil
 }

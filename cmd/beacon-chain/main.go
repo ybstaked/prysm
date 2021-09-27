@@ -3,6 +3,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/prysmaticlabs/prysm/cmd/beacon-chain/sync/checkpoint"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -58,10 +59,9 @@ var appFlags = []cli.Flag{
 	flags.HistoricalSlasherNode,
 	flags.ChainID,
 	flags.NetworkID,
-	flags.WeakSubjectivityCheckpt,
+	flags.WeakSubjectivityCheckpoint,
 	flags.Eth1HeaderReqLimit,
 	flags.GenesisStatePath,
-	flags.WeakSubjectivityCheckpointState,
 	flags.MinPeersPerSubnet,
 	cmd.EnableBackupWebhookFlag,
 	cmd.BackupWebhookOutputDir,
@@ -112,6 +112,8 @@ var appFlags = []cli.Flag{
 	cmd.RestoreSourceFileFlag,
 	cmd.RestoreTargetDirFlag,
 	cmd.BoltMMapInitialSizeFlag,
+	checkpoint.BlockPath,
+	checkpoint.StatePath,
 }
 
 func init() {
@@ -224,7 +226,16 @@ func startNode(ctx *cli.Context) error {
 		gethlog.Root().SetHandler(glogger)
 	}
 
-	beacon, err := node.New(ctx)
+	nodeOpts := make([]node.BeaconNodeOption, 0)
+	cptOpts, err := checkpoint.BeaconNodeOptions(ctx)
+	if err != nil {
+		return err
+	}
+	if cptOpts != nil {
+		nodeOpts = append(nodeOpts, cptOpts)
+	}
+
+	beacon, err := node.New(ctx, nodeOpts...)
 	if err != nil {
 		return err
 	}

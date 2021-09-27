@@ -3,11 +3,11 @@ load("@prysm//tools/go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = [
-        "checkpoint.go",
-        "latest.go",
-        "save.go",
+        "block.go",
+        "get.go",
+        "state.go",
     ],
-    importpath = "github.com/prysmaticlabs/prysm/cmd/prysmctl/checkpoint",
+    importpath = "github.com/prysmaticlabs/prysm/cmd/prysmctl/get",
     visibility = ["//visibility:public"],
     deps = [
         "//api/client/openapi:go_default_library",

@@ -2,6 +2,8 @@ package v2
 
 import (
 	"context"
+	"io"
+	"io/ioutil"
 	"runtime"
 	"sort"
 
@@ -23,6 +25,22 @@ import (
 // InitializeFromProto the beacon state from a protobuf representation.
 func InitializeFromProto(st *ethpb.BeaconStateAltair) (*BeaconState, error) {
 	return InitializeFromProtoUnsafe(proto.Clone(st).(*ethpb.BeaconStateAltair))
+}
+
+func InitializeFromSSZReader(r io.Reader) (*BeaconState, error) {
+	b, err := ioutil.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+	return InitializeFromSSZBytes(b)
+}
+
+func InitializeFromSSZBytes(marshaled []byte) (*BeaconState, error) {
+	st := &ethpb.BeaconStateAltair{}
+	if err := st.UnmarshalSSZ(marshaled); err != nil {
+		return nil, err
+	}
+	return InitializeFromProtoUnsafe(st)
 }
 
 // InitializeFromProtoUnsafe directly uses the beacon state protobuf pointer

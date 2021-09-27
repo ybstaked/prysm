@@ -19,8 +19,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const GET_WEAK_SUBJECTIVITY_CHECKPOINT_SLOT_PATH = "/internal/eth/v1alpha1/beacon/weak_subjectivity_checkpoint"
-const GET_WEAK_SUBJECTIVITY_CHECKPOINT_PATH = "/internal/eth/v1alpha1/beacon/weak_subjectivity_checkpoint"
+const GET_WEAK_SUBJECTIVITY_CHECKPOINT_EPOCH_PATH = "/eth/v1alpha1/beacon/weak_subjectivity_checkpoint_epoch"
+const GET_WEAK_SUBJECTIVITY_CHECKPOINT_PATH = "/eth/v1alpha1/beacon/weak_subjectivity_checkpoint"
 const GET_SIGNED_BLOCK_PATH = "/eth/v2/beacon/blocks"
 const GET_STATE_PATH = "/eth/v2/debug/beacon/states"
 
@@ -79,12 +79,12 @@ func validHostname(h string) (string, error){
 	return fmt.Sprintf("%s:%s", host, port), nil
 }
 
-type checkpointSlotResponse struct {
-	Slot uint64
+type checkpointEpochResponse struct {
+	Epoch string
 }
 
-func (c *Client) GetWeakSubjectivityCheckpointSlot() (uint64, error) {
-	u := c.urlForPath(GET_WEAK_SUBJECTIVITY_CHECKPOINT_SLOT_PATH)
+func (c *Client) GetWeakSubjectivityCheckpointEpoch() (uint64, error) {
+	u := c.urlForPath(GET_WEAK_SUBJECTIVITY_CHECKPOINT_EPOCH_PATH)
 	r, err := c.c.Get(u.String())
 	if err != nil {
 		return 0, err
@@ -92,9 +92,12 @@ func (c *Client) GetWeakSubjectivityCheckpointSlot() (uint64, error) {
 	if r.StatusCode != http.StatusOK {
 		return 0, non200Err(r)
 	}
-	jsonr := &checkpointSlotResponse{}
+	jsonr := &checkpointEpochResponse{}
 	err = json.NewDecoder(r.Body).Decode(jsonr)
-	return jsonr.Slot, err
+	if err != nil {
+		return 0, err
+	}
+	return strconv.ParseUint(jsonr.Epoch, 10, 64)
 }
 
 type WSCResponse struct {
@@ -138,7 +141,7 @@ func (c *Client) GetWeakSubjectivityCheckpoint() (*ethpb.WeakSubjectivityCheckpo
 	}, nil
 }
 
-func (c *Client) GetBlockByRoot(blockHex string) (*ethpb.SignedBeaconBlock, error) {
+func (c *Client) GetBlockByRoot(blockHex string) (*ethpb.SignedBeaconBlockAltair, error) {
 	blockPath := path.Join(GET_SIGNED_BLOCK_PATH, blockHex)
 	u := c.urlForPath(blockPath)
 	log.Printf("requesting %s", u.String())
@@ -155,7 +158,7 @@ func (c *Client) GetBlockByRoot(blockHex string) (*ethpb.SignedBeaconBlock, erro
 		return nil, non200Err(r)
 	}
 
-	v:= &ethpb.SignedBeaconBlock{}
+	v:= &ethpb.SignedBeaconBlockAltair{}
 	b := new(bytes.Buffer)
 	_, err = b.ReadFrom(r.Body)
 	if err != nil {
@@ -192,9 +195,9 @@ func (c *Client) GetStateByRoot(stateHex string) (*ethpb.BeaconStateAltair, erro
 	return v, err
 }
 
-func (c *Client) GetStateByEpoch(epoch int) (*ethpb.BeaconStateAltair, error) {
+func (c *Client) GetStateByEpoch(epoch uint64) (*ethpb.BeaconStateAltair, error) {
 	slot := epoch * SLOTS_PER_EPOCH
-	statePath := path.Join(GET_STATE_PATH, strconv.Itoa(slot))
+	statePath := path.Join(GET_STATE_PATH, strconv.FormatUint(slot, 10))
 	u := c.urlForPath(statePath)
 	log.Printf("requesting %s", u.String())
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)

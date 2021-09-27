@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/prysmaticlabs/prysm/beacon-chain/sync/checkpoint"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -78,11 +79,12 @@ type BeaconNode struct {
 	forkChoiceStore   forkchoice.ForkChoicer
 	stateGen          *stategen.State
 	collector         *bcnodeCollector
+	CheckpointInitializer *checkpoint.Initializer
 }
 
 // New creates a new node instance, sets up configuration options, and registers
 // every required service to the node.
-func New(cliCtx *cli.Context) (*BeaconNode, error) {
+func New(cliCtx *cli.Context, opts ...BeaconNodeOption) (*BeaconNode, error) {
 	if err := configureTracing(cliCtx); err != nil {
 		return nil, err
 	}
@@ -116,6 +118,12 @@ func New(cliCtx *cli.Context) (*BeaconNode, error) {
 		exitPool:          voluntaryexits.NewPool(),
 		slashingsPool:     slashings.NewPool(),
 		syncCommitteePool: synccommittee.NewPool(),
+	}
+
+	for _, o := range opts {
+		if err := o(beacon); err != nil {
+			return nil, err
+		}
 	}
 
 	depositAddress, err := registration.DepositContractAddress()
@@ -330,6 +338,12 @@ func (b *BeaconNode) startDB(cliCtx *cli.Context, depositAddress string) error {
 		return err
 	}
 
+	if b.CheckpointInitializer != nil {
+		if err := b.CheckpointInitializer.Initialize(b.ctx, d); err != nil {
+			return err
+		}
+	}
+
 	knownContract, err := b.db.DepositContractAddress(b.ctx)
 	if err != nil {
 		return err
@@ -417,7 +431,7 @@ func (b *BeaconNode) registerBlockchainService() error {
 		return err
 	}
 
-	wsp := b.cliCtx.String(flags.WeakSubjectivityCheckpt.Name)
+	wsp := b.cliCtx.String(flags.WeakSubjectivityCheckpoint.Name)
 	wsCheckpt, err := helpers.ParseWeakSubjectivityInputString(wsp)
 	if err != nil {
 		return err
@@ -696,3 +710,5 @@ func (b *BeaconNode) registerInteropServices() error {
 	}
 	return nil
 }
+
+type BeaconNodeOption func (*BeaconNode) error
