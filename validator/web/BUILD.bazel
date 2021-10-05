@@ -11,7 +11,7 @@ go_library(
         "log.go",
         ":site_data",  # keep
     ],
-    importpath = "github.com/prysmaticlabs/prysm/validator/web",
+    importpath = "github.com/prysmaticlabs/prysm/v2/validator/web",
     visibility = [
         "//api/gateway:__pkg__",
         "//validator:__subpackages__",

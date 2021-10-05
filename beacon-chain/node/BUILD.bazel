@@ -8,7 +8,7 @@ go_library(
         "node.go",
         "prometheus.go",
     ],
-    importpath = "github.com/prysmaticlabs/prysm/beacon-chain/node",
+    importpath = "github.com/prysmaticlabs/prysm/v2/beacon-chain/node",
     visibility = [
         "//beacon-chain:__subpackages__",
         "//cmd/beacon-chain:__subpackages__",

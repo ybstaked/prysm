@@ -4,7 +4,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_tool_library")
 go_library(
     name = "go_default_library",
     srcs = ["analyzer.go"],
-    importpath = "github.com/prysmaticlabs/prysm/tools/analyzers/interfacechecker",
+    importpath = "github.com/prysmaticlabs/prysm/v2/tools/analyzers/interfacechecker",
     visibility = ["//visibility:public"],
     deps = [
         "@org_golang_x_tools//go/analysis:go_default_library",

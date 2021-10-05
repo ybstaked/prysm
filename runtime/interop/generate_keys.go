@@ -6,9 +6,9 @@ import (
 	"sync"
 
 	"github.com/pkg/errors"
-	"github.com/prysmaticlabs/prysm/async"
-	"github.com/prysmaticlabs/prysm/crypto/bls"
-	"github.com/prysmaticlabs/prysm/crypto/hash"
+	"github.com/prysmaticlabs/prysm/v2/async"
+	"github.com/prysmaticlabs/prysm/v2/crypto/bls"
+	"github.com/prysmaticlabs/prysm/v2/crypto/hash"
 )
 
 const (

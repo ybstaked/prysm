@@ -13,7 +13,7 @@ go_library(
         "slashing.go",
         "wallet.go",
     ],
-    importpath = "github.com/prysmaticlabs/prysm/validator/rpc",
+    importpath = "github.com/prysmaticlabs/prysm/v2/validator/rpc",
     visibility = ["//validator:__subpackages__"],
     deps = [
         "//api/grpc:go_default_library",

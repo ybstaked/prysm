@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/prysmaticlabs/prysm/io/file"
+	"github.com/prysmaticlabs/prysm/v2/io/file"
 	"github.com/urfave/cli/v2"
 )
 

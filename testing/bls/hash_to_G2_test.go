@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/ghodss/yaml"
-	"github.com/prysmaticlabs/prysm/testing/bls/utils"
-	"github.com/prysmaticlabs/prysm/testing/require"
+	"github.com/prysmaticlabs/prysm/v2/testing/bls/utils"
+	"github.com/prysmaticlabs/prysm/v2/testing/require"
 	blst "github.com/supranational/blst/bindings/go"
 )
 

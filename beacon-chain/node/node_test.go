@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	statefeed "github.com/prysmaticlabs/prysm/beacon-chain/core/feed/state"
-	"github.com/prysmaticlabs/prysm/cmd"
-	"github.com/prysmaticlabs/prysm/testing/require"
+	statefeed "github.com/prysmaticlabs/prysm/v2/beacon-chain/core/feed/state"
+	"github.com/prysmaticlabs/prysm/v2/cmd"
+	"github.com/prysmaticlabs/prysm/v2/testing/require"
 	logTest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/urfave/cli/v2"
 )

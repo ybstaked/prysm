@@ -7,9 +7,9 @@ import (
 	"math/big"
 
 	"github.com/pkg/errors"
-	"github.com/prysmaticlabs/prysm/crypto/bls/blst"
-	"github.com/prysmaticlabs/prysm/crypto/bls/common"
-	"github.com/prysmaticlabs/prysm/crypto/bls/herumi"
+	"github.com/prysmaticlabs/prysm/v2/crypto/bls/blst"
+	"github.com/prysmaticlabs/prysm/v2/crypto/bls/common"
+	"github.com/prysmaticlabs/prysm/v2/crypto/bls/herumi"
 )
 
 // Initialize herumi temporarily while we transition to blst for ethdo.

@@ -8,10 +8,10 @@ import (
 	"net/http"
 
 	"github.com/golang/protobuf/ptypes/empty"
-	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	e2e "github.com/prysmaticlabs/prysm/testing/endtoend/params"
-	"github.com/prysmaticlabs/prysm/testing/endtoend/policies"
-	e2etypes "github.com/prysmaticlabs/prysm/testing/endtoend/types"
+	ethpb "github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1"
+	e2e "github.com/prysmaticlabs/prysm/v2/testing/endtoend/params"
+	"github.com/prysmaticlabs/prysm/v2/testing/endtoend/policies"
+	e2etypes "github.com/prysmaticlabs/prysm/v2/testing/endtoend/types"
 	"google.golang.org/grpc"
 )
 

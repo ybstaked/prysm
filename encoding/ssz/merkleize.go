@@ -1,7 +1,7 @@
 package ssz
 
 import (
-	"github.com/prysmaticlabs/prysm/container/trie"
+	"github.com/prysmaticlabs/prysm/v2/container/trie"
 )
 
 // Merkleize.go is mostly a directly copy of the same filename from

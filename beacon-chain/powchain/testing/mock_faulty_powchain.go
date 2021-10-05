@@ -6,12 +6,12 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/prysmaticlabs/prysm/async/event"
-	"github.com/prysmaticlabs/prysm/beacon-chain/powchain/types"
-	"github.com/prysmaticlabs/prysm/beacon-chain/state"
-	v1 "github.com/prysmaticlabs/prysm/beacon-chain/state/v1"
-	"github.com/prysmaticlabs/prysm/container/trie"
-	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
+	"github.com/prysmaticlabs/prysm/v2/async/event"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/powchain/types"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/state"
+	v1 "github.com/prysmaticlabs/prysm/v2/beacon-chain/state/v1"
+	"github.com/prysmaticlabs/prysm/v2/container/trie"
+	ethpb "github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1"
 )
 
 // FaultyMockPOWChain defines an incorrectly functioning powchain service.

@@ -12,7 +12,7 @@ go_library(
         "provider.go",
         "service.go",
     ],
-    importpath = "github.com/prysmaticlabs/prysm/beacon-chain/powchain",
+    importpath = "github.com/prysmaticlabs/prysm/v2/beacon-chain/powchain",
     visibility = [
         "//beacon-chain:__subpackages__",
         "//contracts:__subpackages__",

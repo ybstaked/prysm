@@ -8,24 +8,24 @@ import (
 	"time"
 
 	types "github.com/prysmaticlabs/eth2-types"
-	mock "github.com/prysmaticlabs/prysm/beacon-chain/blockchain/testing"
-	"github.com/prysmaticlabs/prysm/beacon-chain/cache"
-	dbutil "github.com/prysmaticlabs/prysm/beacon-chain/db/testing"
-	"github.com/prysmaticlabs/prysm/beacon-chain/operations/attestations"
-	mockp2p "github.com/prysmaticlabs/prysm/beacon-chain/p2p/testing"
-	"github.com/prysmaticlabs/prysm/beacon-chain/state/stategen"
-	v1 "github.com/prysmaticlabs/prysm/beacon-chain/state/v1"
-	mockSync "github.com/prysmaticlabs/prysm/beacon-chain/sync/initial-sync/testing"
-	"github.com/prysmaticlabs/prysm/config/params"
-	"github.com/prysmaticlabs/prysm/crypto/bls"
-	"github.com/prysmaticlabs/prysm/encoding/bytesutil"
-	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	"github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1/wrapper"
-	"github.com/prysmaticlabs/prysm/testing/assert"
-	"github.com/prysmaticlabs/prysm/testing/require"
-	"github.com/prysmaticlabs/prysm/testing/util"
-	prysmTime "github.com/prysmaticlabs/prysm/time"
-	"github.com/prysmaticlabs/prysm/time/slots"
+	mock "github.com/prysmaticlabs/prysm/v2/beacon-chain/blockchain/testing"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/cache"
+	dbutil "github.com/prysmaticlabs/prysm/v2/beacon-chain/db/testing"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/operations/attestations"
+	mockp2p "github.com/prysmaticlabs/prysm/v2/beacon-chain/p2p/testing"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/state/stategen"
+	v1 "github.com/prysmaticlabs/prysm/v2/beacon-chain/state/v1"
+	mockSync "github.com/prysmaticlabs/prysm/v2/beacon-chain/sync/initial-sync/testing"
+	"github.com/prysmaticlabs/prysm/v2/config/params"
+	"github.com/prysmaticlabs/prysm/v2/crypto/bls"
+	"github.com/prysmaticlabs/prysm/v2/encoding/bytesutil"
+	ethpb "github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1"
+	"github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1/wrapper"
+	"github.com/prysmaticlabs/prysm/v2/testing/assert"
+	"github.com/prysmaticlabs/prysm/v2/testing/require"
+	"github.com/prysmaticlabs/prysm/v2/testing/util"
+	prysmTime "github.com/prysmaticlabs/prysm/v2/time"
+	"github.com/prysmaticlabs/prysm/v2/time/slots"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -176,7 +176,7 @@ func TestAttestationDataAtSlot_HandlesFarAwayJustifiedEpoch(t *testing.T) {
 	// Last justified slot = epoch start of 1500
 	// HistoricalRootsLimit = 8192
 	//
-	// More background: https://github.com/prysmaticlabs/prysm/issues/2153
+	// More background: https://github.com/prysmaticlabs/prysm/v2/issues/2153
 	// This test breaks if it doesnt use mainnet config
 
 	// Ensure HistoricalRootsLimit matches scenario
@@ -331,7 +331,7 @@ func TestServer_GetAttestationData_HeadStateSlotGreaterThanRequestSlot(t *testin
 	// There exists a rare scenario where the validator may request an attestation for a slot less
 	// than the head state's slot. The Ethereum consensus spec constraints require the block root the
 	// attestation is referencing be less than or equal to the attestation data slot.
-	// See: https://github.com/prysmaticlabs/prysm/issues/5164
+	// See: https://github.com/prysmaticlabs/prysm/v2/issues/5164
 	ctx := context.Background()
 	db := dbutil.SetupDB(t)
 

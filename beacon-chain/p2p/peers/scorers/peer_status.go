@@ -6,10 +6,10 @@ import (
 
 	"github.com/libp2p/go-libp2p-core/peer"
 	types "github.com/prysmaticlabs/eth2-types"
-	"github.com/prysmaticlabs/prysm/beacon-chain/p2p/peers/peerdata"
-	p2ptypes "github.com/prysmaticlabs/prysm/beacon-chain/p2p/types"
-	pb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	"github.com/prysmaticlabs/prysm/time"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/p2p/peers/peerdata"
+	p2ptypes "github.com/prysmaticlabs/prysm/v2/beacon-chain/p2p/types"
+	pb "github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1"
+	"github.com/prysmaticlabs/prysm/v2/time"
 )
 
 var _ Scorer = (*PeerStatusScorer)(nil)

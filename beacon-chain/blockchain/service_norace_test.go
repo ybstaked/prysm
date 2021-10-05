@@ -5,8 +5,8 @@ import (
 	"io/ioutil"
 	"testing"
 
-	testDB "github.com/prysmaticlabs/prysm/beacon-chain/db/testing"
-	"github.com/prysmaticlabs/prysm/testing/require"
+	testDB "github.com/prysmaticlabs/prysm/v2/beacon-chain/db/testing"
+	"github.com/prysmaticlabs/prysm/v2/testing/require"
 	"github.com/sirupsen/logrus"
 )
 

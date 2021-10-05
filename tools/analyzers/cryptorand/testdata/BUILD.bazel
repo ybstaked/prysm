@@ -6,6 +6,6 @@ go_library(
         "custom_import.go",
         "rand_new.go",
     ],
-    importpath = "github.com/prysmaticlabs/prysm/tools/analyzers/cryptorand/testdata",
+    importpath = "github.com/prysmaticlabs/prysm/v2/tools/analyzers/cryptorand/testdata",
     visibility = ["//visibility:public"],
 )

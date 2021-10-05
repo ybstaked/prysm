@@ -7,7 +7,7 @@ go_library(
         "maxcover.go",
         "naive.go",
     ],
-    importpath = "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1/attestation/aggregation/attestations",
+    importpath = "github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1/attestation/aggregation/attestations",
     visibility = ["//visibility:public"],
     deps = [
         "//config/features:go_default_library",

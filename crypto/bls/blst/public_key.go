@@ -8,9 +8,9 @@ import (
 
 	"github.com/dgraph-io/ristretto"
 	"github.com/pkg/errors"
-	"github.com/prysmaticlabs/prysm/config/features"
-	"github.com/prysmaticlabs/prysm/config/params"
-	"github.com/prysmaticlabs/prysm/crypto/bls/common"
+	"github.com/prysmaticlabs/prysm/v2/config/features"
+	"github.com/prysmaticlabs/prysm/v2/config/params"
+	"github.com/prysmaticlabs/prysm/v2/crypto/bls/common"
 )
 
 var maxKeys = int64(1000000)

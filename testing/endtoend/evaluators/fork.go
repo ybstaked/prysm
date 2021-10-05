@@ -4,12 +4,12 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
-	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	wrapperv2 "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1/wrapper"
-	"github.com/prysmaticlabs/prysm/testing/endtoend/helpers"
-	"github.com/prysmaticlabs/prysm/testing/endtoend/policies"
-	"github.com/prysmaticlabs/prysm/testing/endtoend/types"
-	"github.com/prysmaticlabs/prysm/time/slots"
+	ethpb "github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1"
+	wrapperv2 "github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1/wrapper"
+	"github.com/prysmaticlabs/prysm/v2/testing/endtoend/helpers"
+	"github.com/prysmaticlabs/prysm/v2/testing/endtoend/policies"
+	"github.com/prysmaticlabs/prysm/v2/testing/endtoend/types"
+	"github.com/prysmaticlabs/prysm/v2/time/slots"
 	"google.golang.org/grpc"
 )
 

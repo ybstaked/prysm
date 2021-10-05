@@ -9,7 +9,7 @@ go_library(
         "htrutils.go",
         "merkleize.go",
     ],
-    importpath = "github.com/prysmaticlabs/prysm/encoding/ssz",
+    importpath = "github.com/prysmaticlabs/prysm/v2/encoding/ssz",
     visibility = ["//visibility:public"],
     deps = [
         "//config/params:go_default_library",

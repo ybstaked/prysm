@@ -18,23 +18,23 @@ import (
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/pkg/errors"
 	types "github.com/prysmaticlabs/eth2-types"
-	"github.com/prysmaticlabs/prysm/async/event"
-	"github.com/prysmaticlabs/prysm/beacon-chain/core/altair"
-	"github.com/prysmaticlabs/prysm/config/features"
-	"github.com/prysmaticlabs/prysm/config/params"
-	"github.com/prysmaticlabs/prysm/crypto/hash"
-	"github.com/prysmaticlabs/prysm/encoding/bytesutil"
-	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	"github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1/block"
-	"github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1/wrapper"
-	"github.com/prysmaticlabs/prysm/time/slots"
-	accountsiface "github.com/prysmaticlabs/prysm/validator/accounts/iface"
-	"github.com/prysmaticlabs/prysm/validator/accounts/wallet"
-	"github.com/prysmaticlabs/prysm/validator/client/iface"
-	vdb "github.com/prysmaticlabs/prysm/validator/db"
-	"github.com/prysmaticlabs/prysm/validator/db/kv"
-	"github.com/prysmaticlabs/prysm/validator/graffiti"
-	"github.com/prysmaticlabs/prysm/validator/keymanager"
+	"github.com/prysmaticlabs/prysm/v2/async/event"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/core/altair"
+	"github.com/prysmaticlabs/prysm/v2/config/features"
+	"github.com/prysmaticlabs/prysm/v2/config/params"
+	"github.com/prysmaticlabs/prysm/v2/crypto/hash"
+	"github.com/prysmaticlabs/prysm/v2/encoding/bytesutil"
+	ethpb "github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1"
+	"github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1/block"
+	"github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1/wrapper"
+	"github.com/prysmaticlabs/prysm/v2/time/slots"
+	accountsiface "github.com/prysmaticlabs/prysm/v2/validator/accounts/iface"
+	"github.com/prysmaticlabs/prysm/v2/validator/accounts/wallet"
+	"github.com/prysmaticlabs/prysm/v2/validator/client/iface"
+	vdb "github.com/prysmaticlabs/prysm/v2/validator/db"
+	"github.com/prysmaticlabs/prysm/v2/validator/db/kv"
+	"github.com/prysmaticlabs/prysm/v2/validator/graffiti"
+	"github.com/prysmaticlabs/prysm/v2/validator/keymanager"
 	"github.com/sirupsen/logrus"
 	"go.opencensus.io/trace"
 	"google.golang.org/protobuf/proto"
@@ -170,7 +170,7 @@ func (v *validator) WaitForChainStart(ctx context.Context) error {
 				log.Errorf("The genesis validators root received from the beacon node does not match what is in " +
 					"your validator database. This could indicate that this is a database meant for another network. If " +
 					"you were previously running this validator database on another network, please run --clear-db to " +
-					"clear the database. If not, please file an issue at https://github.com/prysmaticlabs/prysm/issues")
+					"clear the database. If not, please file an issue at https://github.com/prysmaticlabs/prysm/v2/issues")
 				return fmt.Errorf(
 					"genesis validators root from beacon node (%#x) does not match root saved in validator db (%#x)",
 					chainStartRes.GenesisValidatorsRoot,

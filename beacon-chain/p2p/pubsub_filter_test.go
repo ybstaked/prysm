@@ -9,14 +9,14 @@ import (
 
 	"github.com/libp2p/go-libp2p-core/peer"
 	pubsubpb "github.com/libp2p/go-libp2p-pubsub/pb"
-	mock "github.com/prysmaticlabs/prysm/beacon-chain/blockchain/testing"
-	"github.com/prysmaticlabs/prysm/beacon-chain/core/feed"
-	statefeed "github.com/prysmaticlabs/prysm/beacon-chain/core/feed/state"
-	"github.com/prysmaticlabs/prysm/beacon-chain/p2p/encoder"
-	"github.com/prysmaticlabs/prysm/encoding/bytesutil"
-	"github.com/prysmaticlabs/prysm/network/forks"
-	"github.com/prysmaticlabs/prysm/testing/assert"
-	prysmTime "github.com/prysmaticlabs/prysm/time"
+	mock "github.com/prysmaticlabs/prysm/v2/beacon-chain/blockchain/testing"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/core/feed"
+	statefeed "github.com/prysmaticlabs/prysm/v2/beacon-chain/core/feed/state"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/p2p/encoder"
+	"github.com/prysmaticlabs/prysm/v2/encoding/bytesutil"
+	"github.com/prysmaticlabs/prysm/v2/network/forks"
+	"github.com/prysmaticlabs/prysm/v2/testing/assert"
+	prysmTime "github.com/prysmaticlabs/prysm/v2/time"
 	"github.com/stretchr/testify/require"
 )
 

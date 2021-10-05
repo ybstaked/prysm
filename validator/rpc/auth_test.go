@@ -8,15 +8,15 @@ import (
 
 	"github.com/golang-jwt/jwt"
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/prysmaticlabs/prysm/async/event"
-	"github.com/prysmaticlabs/prysm/io/file"
-	pb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1/validator-client"
-	"github.com/prysmaticlabs/prysm/testing/assert"
-	"github.com/prysmaticlabs/prysm/testing/require"
-	"github.com/prysmaticlabs/prysm/validator/accounts"
-	"github.com/prysmaticlabs/prysm/validator/accounts/wallet"
-	dbtest "github.com/prysmaticlabs/prysm/validator/db/testing"
-	"github.com/prysmaticlabs/prysm/validator/keymanager"
+	"github.com/prysmaticlabs/prysm/v2/async/event"
+	"github.com/prysmaticlabs/prysm/v2/io/file"
+	pb "github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1/validator-client"
+	"github.com/prysmaticlabs/prysm/v2/testing/assert"
+	"github.com/prysmaticlabs/prysm/v2/testing/require"
+	"github.com/prysmaticlabs/prysm/v2/validator/accounts"
+	"github.com/prysmaticlabs/prysm/v2/validator/accounts/wallet"
+	dbtest "github.com/prysmaticlabs/prysm/v2/validator/db/testing"
+	"github.com/prysmaticlabs/prysm/v2/validator/keymanager"
 )
 
 func setupWalletDir(t testing.TB) string {

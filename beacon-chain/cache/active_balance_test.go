@@ -6,11 +6,11 @@ import (
 	"testing"
 
 	types "github.com/prysmaticlabs/eth2-types"
-	state "github.com/prysmaticlabs/prysm/beacon-chain/state/v1"
-	"github.com/prysmaticlabs/prysm/config/features"
-	"github.com/prysmaticlabs/prysm/config/params"
-	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	"github.com/prysmaticlabs/prysm/testing/require"
+	state "github.com/prysmaticlabs/prysm/v2/beacon-chain/state/v1"
+	"github.com/prysmaticlabs/prysm/v2/config/features"
+	"github.com/prysmaticlabs/prysm/v2/config/params"
+	ethpb "github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1"
+	"github.com/prysmaticlabs/prysm/v2/testing/require"
 )
 
 func TestBalanceCache_AddGetBalance(t *testing.T) {

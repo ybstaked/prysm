@@ -4,8 +4,8 @@ import (
 	"errors"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/prysmaticlabs/prysm/cmd/beacon-chain/flags"
-	"github.com/prysmaticlabs/prysm/config/params"
+	"github.com/prysmaticlabs/prysm/v2/cmd/beacon-chain/flags"
+	"github.com/prysmaticlabs/prysm/v2/config/params"
 	"github.com/urfave/cli/v2"
 )
 

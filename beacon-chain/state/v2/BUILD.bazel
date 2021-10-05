@@ -30,7 +30,7 @@ go_library(
         "state_trie.go",
         "types.go",
     ],
-    importpath = "github.com/prysmaticlabs/prysm/beacon-chain/state/v2",
+    importpath = "github.com/prysmaticlabs/prysm/v2/beacon-chain/state/v2",
     visibility = [
         "//beacon-chain:__subpackages__",
         "//proto/migration:__subpackages__",

@@ -27,7 +27,7 @@ go_library(
         "state_summary_cache.go",
         "utils.go",
     ],
-    importpath = "github.com/prysmaticlabs/prysm/beacon-chain/db/kv",
+    importpath = "github.com/prysmaticlabs/prysm/v2/beacon-chain/db/kv",
     visibility = [
         "//beacon-chain:__subpackages__",
         "//testing/fuzz:__pkg__",

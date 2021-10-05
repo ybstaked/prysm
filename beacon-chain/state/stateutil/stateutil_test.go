@@ -3,7 +3,7 @@ package stateutil_test
 import (
 	"testing"
 
-	"github.com/prysmaticlabs/prysm/config/features"
+	"github.com/prysmaticlabs/prysm/v2/config/features"
 )
 
 func TestMain(m *testing.M) {

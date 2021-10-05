@@ -4,7 +4,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/prysmaticlabs/prysm/network/authorization"
+	"github.com/prysmaticlabs/prysm/v2/network/authorization"
 )
 
 // Endpoint is an endpoint with authorization data.

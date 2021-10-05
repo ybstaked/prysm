@@ -7,10 +7,10 @@ import (
 	libp2pcore "github.com/libp2p/go-libp2p-core"
 	"github.com/libp2p/go-libp2p-core/mux"
 	"github.com/libp2p/go-libp2p-core/network"
-	"github.com/prysmaticlabs/prysm/beacon-chain/p2p"
-	"github.com/prysmaticlabs/prysm/beacon-chain/p2p/encoder"
-	"github.com/prysmaticlabs/prysm/beacon-chain/p2p/types"
-	"github.com/prysmaticlabs/prysm/config/params"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/p2p"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/p2p/encoder"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/p2p/types"
+	"github.com/prysmaticlabs/prysm/v2/config/params"
 	"github.com/sirupsen/logrus"
 )
 

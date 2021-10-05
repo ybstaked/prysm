@@ -5,12 +5,12 @@ import (
 	"testing"
 
 	types "github.com/prysmaticlabs/eth2-types"
-	v1 "github.com/prysmaticlabs/prysm/beacon-chain/state/v1"
-	"github.com/prysmaticlabs/prysm/config/params"
-	ethpb "github.com/prysmaticlabs/prysm/proto/eth/v1"
-	"github.com/prysmaticlabs/prysm/proto/migration"
-	"github.com/prysmaticlabs/prysm/testing/assert"
-	"github.com/prysmaticlabs/prysm/testing/require"
+	v1 "github.com/prysmaticlabs/prysm/v2/beacon-chain/state/v1"
+	"github.com/prysmaticlabs/prysm/v2/config/params"
+	ethpb "github.com/prysmaticlabs/prysm/v2/proto/eth/v1"
+	"github.com/prysmaticlabs/prysm/v2/proto/migration"
+	"github.com/prysmaticlabs/prysm/v2/testing/assert"
+	"github.com/prysmaticlabs/prysm/v2/testing/require"
 )
 
 func Test_ValidatorStatus(t *testing.T) {

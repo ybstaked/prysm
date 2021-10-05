@@ -6,9 +6,9 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	types "github.com/prysmaticlabs/eth2-types"
 	"github.com/prysmaticlabs/go-bitfield"
-	v1 "github.com/prysmaticlabs/prysm/beacon-chain/state/v1"
-	"github.com/prysmaticlabs/prysm/config/params"
-	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
+	v1 "github.com/prysmaticlabs/prysm/v2/beacon-chain/state/v1"
+	"github.com/prysmaticlabs/prysm/v2/config/params"
+	ethpb "github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1"
 )
 
 // FillRootsNaturalOpt is meant to be used as an option when calling NewBeaconState.

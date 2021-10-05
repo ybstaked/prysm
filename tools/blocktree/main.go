@@ -17,10 +17,10 @@ import (
 
 	"github.com/emicklei/dot"
 	types "github.com/prysmaticlabs/eth2-types"
-	"github.com/prysmaticlabs/prysm/beacon-chain/db"
-	"github.com/prysmaticlabs/prysm/beacon-chain/db/filters"
-	"github.com/prysmaticlabs/prysm/beacon-chain/db/kv"
-	"github.com/prysmaticlabs/prysm/encoding/bytesutil"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/db"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/db/filters"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/db/kv"
+	"github.com/prysmaticlabs/prysm/v2/encoding/bytesutil"
 )
 
 var (

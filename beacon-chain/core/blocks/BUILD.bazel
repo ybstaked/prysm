@@ -15,7 +15,7 @@ go_library(
         "randao.go",
         "signature.go",
     ],
-    importpath = "github.com/prysmaticlabs/prysm/beacon-chain/core/blocks",
+    importpath = "github.com/prysmaticlabs/prysm/v2/beacon-chain/core/blocks",
     visibility = [
         "//beacon-chain:__subpackages__",
         "//testing/fuzz:__pkg__",

@@ -7,7 +7,7 @@ go_library(
     data = [
         "@sigp_beacon_fuzz_corpora//:current_mainnet_beaconstate",
     ],
-    importpath = "github.com/prysmaticlabs/prysm/testing/fuzz/testing",
+    importpath = "github.com/prysmaticlabs/prysm/v2/testing/fuzz/testing",
     visibility = [
         "//testing/fuzz:__pkg__",
     ],

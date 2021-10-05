@@ -6,9 +6,9 @@ package blst_test
 import (
 	"testing"
 
-	"github.com/prysmaticlabs/prysm/crypto/bls/blst"
-	"github.com/prysmaticlabs/prysm/crypto/bls/common"
-	"github.com/prysmaticlabs/prysm/testing/require"
+	"github.com/prysmaticlabs/prysm/v2/crypto/bls/blst"
+	"github.com/prysmaticlabs/prysm/v2/crypto/bls/common"
+	"github.com/prysmaticlabs/prysm/v2/testing/require"
 )
 
 func BenchmarkSignature_Verify(b *testing.B) {

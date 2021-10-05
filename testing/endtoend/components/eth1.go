@@ -19,11 +19,11 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/prysmaticlabs/prysm/config/params"
-	contracts "github.com/prysmaticlabs/prysm/contracts/deposit"
-	"github.com/prysmaticlabs/prysm/testing/endtoend/helpers"
-	e2e "github.com/prysmaticlabs/prysm/testing/endtoend/params"
-	e2etypes "github.com/prysmaticlabs/prysm/testing/endtoend/types"
+	"github.com/prysmaticlabs/prysm/v2/config/params"
+	contracts "github.com/prysmaticlabs/prysm/v2/contracts/deposit"
+	"github.com/prysmaticlabs/prysm/v2/testing/endtoend/helpers"
+	e2e "github.com/prysmaticlabs/prysm/v2/testing/endtoend/params"
+	e2etypes "github.com/prysmaticlabs/prysm/v2/testing/endtoend/types"
 )
 
 const timeGapPerTX = 100 * time.Millisecond

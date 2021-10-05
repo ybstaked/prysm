@@ -4,8 +4,8 @@ import (
 	"sync"
 
 	types "github.com/prysmaticlabs/eth2-types"
-	coreutils "github.com/prysmaticlabs/prysm/beacon-chain/core/transition/stateutils"
-	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
+	coreutils "github.com/prysmaticlabs/prysm/v2/beacon-chain/core/transition/stateutils"
+	ethpb "github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1"
 )
 
 // ValidatorMapHandler is a container to hold the map and a reference tracker for how many

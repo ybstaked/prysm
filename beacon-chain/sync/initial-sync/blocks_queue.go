@@ -7,11 +7,11 @@ import (
 
 	"github.com/libp2p/go-libp2p-core/peer"
 	types "github.com/prysmaticlabs/eth2-types"
-	"github.com/prysmaticlabs/prysm/beacon-chain/db"
-	"github.com/prysmaticlabs/prysm/beacon-chain/p2p"
-	beaconsync "github.com/prysmaticlabs/prysm/beacon-chain/sync"
-	"github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1/block"
-	"github.com/prysmaticlabs/prysm/time/slots"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/db"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/p2p"
+	beaconsync "github.com/prysmaticlabs/prysm/v2/beacon-chain/sync"
+	"github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1/block"
+	"github.com/prysmaticlabs/prysm/v2/time/slots"
 	"github.com/sirupsen/logrus"
 )
 

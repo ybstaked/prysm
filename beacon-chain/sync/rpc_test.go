@@ -8,14 +8,14 @@ import (
 
 	libp2pcore "github.com/libp2p/go-libp2p-core"
 	"github.com/libp2p/go-libp2p-core/network"
-	"github.com/prysmaticlabs/prysm/beacon-chain/core/transition"
-	prysmP2P "github.com/prysmaticlabs/prysm/beacon-chain/p2p"
-	"github.com/prysmaticlabs/prysm/beacon-chain/p2p/encoder"
-	p2ptest "github.com/prysmaticlabs/prysm/beacon-chain/p2p/testing"
-	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	"github.com/prysmaticlabs/prysm/testing/assert"
-	"github.com/prysmaticlabs/prysm/testing/require"
-	"github.com/prysmaticlabs/prysm/testing/util"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/core/transition"
+	prysmP2P "github.com/prysmaticlabs/prysm/v2/beacon-chain/p2p"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/p2p/encoder"
+	p2ptest "github.com/prysmaticlabs/prysm/v2/beacon-chain/p2p/testing"
+	ethpb "github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1"
+	"github.com/prysmaticlabs/prysm/v2/testing/assert"
+	"github.com/prysmaticlabs/prysm/v2/testing/require"
+	"github.com/prysmaticlabs/prysm/v2/testing/util"
 )
 
 func init() {

@@ -6,13 +6,13 @@ import (
 	"testing"
 
 	"github.com/golang/snappy"
-	v1 "github.com/prysmaticlabs/prysm/beacon-chain/state/v1"
-	v2 "github.com/prysmaticlabs/prysm/beacon-chain/state/v2"
-	"github.com/prysmaticlabs/prysm/config/features"
-	v1alpha1 "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	"github.com/prysmaticlabs/prysm/testing/assert"
-	"github.com/prysmaticlabs/prysm/testing/require"
-	"github.com/prysmaticlabs/prysm/testing/util"
+	v1 "github.com/prysmaticlabs/prysm/v2/beacon-chain/state/v1"
+	v2 "github.com/prysmaticlabs/prysm/v2/beacon-chain/state/v2"
+	"github.com/prysmaticlabs/prysm/v2/config/features"
+	v1alpha1 "github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1"
+	"github.com/prysmaticlabs/prysm/v2/testing/assert"
+	"github.com/prysmaticlabs/prysm/v2/testing/require"
+	"github.com/prysmaticlabs/prysm/v2/testing/util"
 	"go.etcd.io/bbolt"
 )
 

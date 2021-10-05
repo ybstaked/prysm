@@ -10,13 +10,13 @@ import (
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/protocol"
 	types "github.com/prysmaticlabs/eth2-types"
-	mock "github.com/prysmaticlabs/prysm/beacon-chain/blockchain/testing"
-	db "github.com/prysmaticlabs/prysm/beacon-chain/db/testing"
-	p2ptest "github.com/prysmaticlabs/prysm/beacon-chain/p2p/testing"
-	p2ptypes "github.com/prysmaticlabs/prysm/beacon-chain/p2p/types"
-	"github.com/prysmaticlabs/prysm/testing/assert"
-	"github.com/prysmaticlabs/prysm/testing/require"
-	"github.com/prysmaticlabs/prysm/testing/util"
+	mock "github.com/prysmaticlabs/prysm/v2/beacon-chain/blockchain/testing"
+	db "github.com/prysmaticlabs/prysm/v2/beacon-chain/db/testing"
+	p2ptest "github.com/prysmaticlabs/prysm/v2/beacon-chain/p2p/testing"
+	p2ptypes "github.com/prysmaticlabs/prysm/v2/beacon-chain/p2p/types"
+	"github.com/prysmaticlabs/prysm/v2/testing/assert"
+	"github.com/prysmaticlabs/prysm/v2/testing/require"
+	"github.com/prysmaticlabs/prysm/v2/testing/util"
 )
 
 func TestGoodByeRPCHandler_Disconnects_With_Peer(t *testing.T) {

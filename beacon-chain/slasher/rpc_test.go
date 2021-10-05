@@ -6,12 +6,12 @@ import (
 	"time"
 
 	types "github.com/prysmaticlabs/eth2-types"
-	dbtest "github.com/prysmaticlabs/prysm/beacon-chain/db/testing"
-	slashertypes "github.com/prysmaticlabs/prysm/beacon-chain/slasher/types"
-	"github.com/prysmaticlabs/prysm/config/params"
-	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	"github.com/prysmaticlabs/prysm/testing/assert"
-	"github.com/prysmaticlabs/prysm/testing/require"
+	dbtest "github.com/prysmaticlabs/prysm/v2/beacon-chain/db/testing"
+	slashertypes "github.com/prysmaticlabs/prysm/v2/beacon-chain/slasher/types"
+	"github.com/prysmaticlabs/prysm/v2/config/params"
+	ethpb "github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1"
+	"github.com/prysmaticlabs/prysm/v2/testing/assert"
+	"github.com/prysmaticlabs/prysm/v2/testing/require"
 )
 
 func TestIsSlashableBlock(t *testing.T) {

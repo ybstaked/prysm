@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	types "github.com/prysmaticlabs/eth2-types"
-	eth "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	e2etypes "github.com/prysmaticlabs/prysm/testing/endtoend/types"
+	eth "github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1"
+	e2etypes "github.com/prysmaticlabs/prysm/v2/testing/endtoend/types"
 	"google.golang.org/grpc"
 )
 

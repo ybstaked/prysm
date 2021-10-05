@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/prysmaticlabs/prysm/async"
-	"github.com/prysmaticlabs/prysm/testing/assert"
-	"github.com/prysmaticlabs/prysm/testing/require"
-	"github.com/prysmaticlabs/prysm/testing/util"
+	"github.com/prysmaticlabs/prysm/v2/async"
+	"github.com/prysmaticlabs/prysm/v2/testing/assert"
+	"github.com/prysmaticlabs/prysm/v2/testing/require"
+	"github.com/prysmaticlabs/prysm/v2/testing/util"
 )
 
 func TestDebounce_NoEvents(t *testing.T) {

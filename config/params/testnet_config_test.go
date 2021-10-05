@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/bazelbuild/rules_go/go/tools/bazel"
-	"github.com/prysmaticlabs/prysm/testing/require"
+	"github.com/prysmaticlabs/prysm/v2/testing/require"
 )
 
 func testnetConfigFilePath(t *testing.T, network string) string {

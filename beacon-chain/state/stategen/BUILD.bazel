@@ -15,7 +15,7 @@ go_library(
         "service.go",
         "setter.go",
     ],
-    importpath = "github.com/prysmaticlabs/prysm/beacon-chain/state/stategen",
+    importpath = "github.com/prysmaticlabs/prysm/v2/beacon-chain/state/stategen",
     visibility = [
         "//beacon-chain:__subpackages__",
         "//testing/endtoend:__subpackages__",

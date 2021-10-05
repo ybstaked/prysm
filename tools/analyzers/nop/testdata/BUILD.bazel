@@ -3,6 +3,6 @@ load("@prysm//tools/go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["no_op.go"],
-    importpath = "github.com/prysmaticlabs/prysm/tools/analyzers/nop/testdata",
+    importpath = "github.com/prysmaticlabs/prysm/v2/tools/analyzers/nop/testdata",
     visibility = ["//visibility:public"],
 )

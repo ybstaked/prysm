@@ -3,7 +3,7 @@ package iface
 import (
 	"context"
 
-	"github.com/prysmaticlabs/prysm/validator/keymanager"
+	"github.com/prysmaticlabs/prysm/v2/validator/keymanager"
 )
 
 // InitKeymanagerConfig defines configuration options for initializing a keymanager.

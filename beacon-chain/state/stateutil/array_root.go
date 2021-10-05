@@ -3,7 +3,7 @@ package stateutil
 import (
 	"fmt"
 
-	"github.com/prysmaticlabs/prysm/encoding/bytesutil"
+	"github.com/prysmaticlabs/prysm/v2/encoding/bytesutil"
 )
 
 // HandleByteArrays computes and returns byte arrays in a slice of root format.

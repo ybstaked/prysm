@@ -8,8 +8,8 @@ import (
 	commonMath "github.com/ethereum/go-ethereum/common/math"
 	"github.com/pkg/errors"
 	types "github.com/prysmaticlabs/eth2-types"
-	"github.com/prysmaticlabs/prysm/config/params"
-	prysmTime "github.com/prysmaticlabs/prysm/time"
+	"github.com/prysmaticlabs/prysm/v2/config/params"
+	prysmTime "github.com/prysmaticlabs/prysm/v2/time"
 )
 
 // MaxSlotBuffer specifies the max buffer given to slots from

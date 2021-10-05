@@ -10,15 +10,15 @@ import (
 	"time"
 
 	types "github.com/prysmaticlabs/eth2-types"
-	"github.com/prysmaticlabs/prysm/beacon-chain/cache/depositcache"
-	"github.com/prysmaticlabs/prysm/beacon-chain/db"
-	"github.com/prysmaticlabs/prysm/beacon-chain/powchain"
-	"github.com/prysmaticlabs/prysm/beacon-chain/state"
-	v1 "github.com/prysmaticlabs/prysm/beacon-chain/state/v1"
-	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	"github.com/prysmaticlabs/prysm/runtime"
-	"github.com/prysmaticlabs/prysm/runtime/interop"
-	"github.com/prysmaticlabs/prysm/time/slots"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/cache/depositcache"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/db"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/powchain"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/state"
+	v1 "github.com/prysmaticlabs/prysm/v2/beacon-chain/state/v1"
+	ethpb "github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1"
+	"github.com/prysmaticlabs/prysm/v2/runtime"
+	"github.com/prysmaticlabs/prysm/v2/runtime/interop"
+	"github.com/prysmaticlabs/prysm/v2/time/slots"
 )
 
 var _ runtime.Service = (*Service)(nil)

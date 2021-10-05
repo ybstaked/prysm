@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
-	e "github.com/prysmaticlabs/prysm/beacon-chain/core/epoch"
-	"github.com/prysmaticlabs/prysm/beacon-chain/core/epoch/precompute"
-	"github.com/prysmaticlabs/prysm/beacon-chain/state"
-	"github.com/prysmaticlabs/prysm/config/params"
+	e "github.com/prysmaticlabs/prysm/v2/beacon-chain/core/epoch"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/core/epoch/precompute"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/state"
+	"github.com/prysmaticlabs/prysm/v2/config/params"
 	"go.opencensus.io/trace"
 )
 

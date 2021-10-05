@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	ma "github.com/multiformats/go-multiaddr"
-	"github.com/prysmaticlabs/prysm/testing/assert"
-	"github.com/prysmaticlabs/prysm/testing/require"
+	"github.com/prysmaticlabs/prysm/v2/testing/assert"
+	"github.com/prysmaticlabs/prysm/v2/testing/require"
 )
 
 func TestRelayAddrs_OnlyFactory(t *testing.T) {

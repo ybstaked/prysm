@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	types "github.com/prysmaticlabs/eth2-types"
-	"github.com/prysmaticlabs/prysm/math"
+	"github.com/prysmaticlabs/prysm/v2/math"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
+	ethpb "github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1"
 	"google.golang.org/protobuf/proto"
 )
 

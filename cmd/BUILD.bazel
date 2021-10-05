@@ -11,7 +11,7 @@ go_library(
         "password_reader_mock.go",
         "wrap_flags.go",
     ],
-    importpath = "github.com/prysmaticlabs/prysm/cmd",
+    importpath = "github.com/prysmaticlabs/prysm/v2/cmd",
     visibility = ["//visibility:public"],
     deps = [
         "//config/params:go_default_library",

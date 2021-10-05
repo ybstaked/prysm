@@ -23,7 +23,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/prysmaticlabs/prysm/config/params"
+	"github.com/prysmaticlabs/prysm/v2/config/params"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )
@@ -60,7 +60,7 @@ type Flags struct {
 	DisableBroadcastSlashings bool // DisableBroadcastSlashings disables p2p broadcasting of proposer and attester slashings.
 
 	// Cache toggles.
-	EnableSSZCache           bool // EnableSSZCache see https://github.com/prysmaticlabs/prysm/pull/4558.
+	EnableSSZCache           bool // EnableSSZCache see https://github.com/prysmaticlabs/prysm/v2/pull/4558.
 	EnableNextSlotStateCache bool // EnableNextSlotStateCache enables next slot state cache to improve validator performance.
 	EnableActiveBalanceCache bool // EnableActiveBalanceCache enables active balance cache.
 

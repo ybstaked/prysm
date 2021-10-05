@@ -2,13 +2,13 @@ package migration
 
 import (
 	"github.com/pkg/errors"
-	statev1 "github.com/prysmaticlabs/prysm/beacon-chain/state/v1"
-	statev2 "github.com/prysmaticlabs/prysm/beacon-chain/state/v2"
-	"github.com/prysmaticlabs/prysm/encoding/bytesutil"
-	ethpbv1 "github.com/prysmaticlabs/prysm/proto/eth/v1"
-	ethpbv2 "github.com/prysmaticlabs/prysm/proto/eth/v2"
-	ethpbalpha "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	"github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1/block"
+	statev1 "github.com/prysmaticlabs/prysm/v2/beacon-chain/state/v1"
+	statev2 "github.com/prysmaticlabs/prysm/v2/beacon-chain/state/v2"
+	"github.com/prysmaticlabs/prysm/v2/encoding/bytesutil"
+	ethpbv1 "github.com/prysmaticlabs/prysm/v2/proto/eth/v1"
+	ethpbv2 "github.com/prysmaticlabs/prysm/v2/proto/eth/v2"
+	ethpbalpha "github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1"
+	"github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1/block"
 	"google.golang.org/protobuf/proto"
 )
 

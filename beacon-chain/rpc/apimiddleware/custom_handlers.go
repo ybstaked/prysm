@@ -11,9 +11,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/prysmaticlabs/prysm/api/gateway/apimiddleware"
-	"github.com/prysmaticlabs/prysm/api/grpc"
-	"github.com/prysmaticlabs/prysm/beacon-chain/rpc/eth/events"
+	"github.com/prysmaticlabs/prysm/v2/api/gateway/apimiddleware"
+	"github.com/prysmaticlabs/prysm/v2/api/grpc"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/rpc/eth/events"
 	"github.com/r3labs/sse"
 )
 

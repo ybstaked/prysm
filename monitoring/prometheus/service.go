@@ -14,7 +14,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prysmaticlabs/prysm/runtime"
+	"github.com/prysmaticlabs/prysm/v2/runtime"
 	"github.com/sirupsen/logrus"
 )
 

@@ -8,11 +8,11 @@ import (
 
 	"github.com/pkg/errors"
 	types "github.com/prysmaticlabs/eth2-types"
-	"github.com/prysmaticlabs/prysm/config/params"
-	"github.com/prysmaticlabs/prysm/encoding/bytesutil"
-	"github.com/prysmaticlabs/prysm/time/slots"
-	"github.com/prysmaticlabs/prysm/validator/client/iface"
-	"github.com/prysmaticlabs/prysm/validator/keymanager/remote"
+	"github.com/prysmaticlabs/prysm/v2/config/params"
+	"github.com/prysmaticlabs/prysm/v2/encoding/bytesutil"
+	"github.com/prysmaticlabs/prysm/v2/time/slots"
+	"github.com/prysmaticlabs/prysm/v2/validator/client/iface"
+	"github.com/prysmaticlabs/prysm/v2/validator/keymanager/remote"
 	"go.opencensus.io/trace"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -215,7 +215,7 @@ func run(ctx context.Context, v iface.Validator) {
 					if err := recover(); err != nil { // catch any panic in logging
 						log.WithField("err", err).
 							Error("Panic occurred when logging validator report. This" +
-								" should never happen! Please file a report at github.com/prysmaticlabs/prysm/issues/new")
+								" should never happen! Please file a report at github.com/prysmaticlabs/prysm/v2/issues/new")
 					}
 				}()
 				// Log this client performance in the previous epoch

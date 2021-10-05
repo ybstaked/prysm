@@ -5,8 +5,8 @@ import (
 	"time"
 
 	types "github.com/prysmaticlabs/eth2-types"
-	"github.com/prysmaticlabs/prysm/config/params"
-	prysmTime "github.com/prysmaticlabs/prysm/time"
+	"github.com/prysmaticlabs/prysm/v2/config/params"
+	prysmTime "github.com/prysmaticlabs/prysm/v2/time"
 )
 
 func TestSlotsSinceGenesis(t *testing.T) {

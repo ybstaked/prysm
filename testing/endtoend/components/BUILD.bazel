@@ -11,7 +11,7 @@ go_library(
         "tracing_sink.go",
         "validator.go",
     ],
-    importpath = "github.com/prysmaticlabs/prysm/testing/endtoend/components",
+    importpath = "github.com/prysmaticlabs/prysm/v2/testing/endtoend/components",
     visibility = ["//testing/endtoend:__subpackages__"],
     deps = [
         "//cmd:go_default_library",

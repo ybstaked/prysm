@@ -3,7 +3,7 @@
 package slasher
 
 import (
-	slasherservice "github.com/prysmaticlabs/prysm/beacon-chain/slasher"
+	slasherservice "github.com/prysmaticlabs/prysm/v2/beacon-chain/slasher"
 )
 
 // Server defines a server implementation of the gRPC slasher service.

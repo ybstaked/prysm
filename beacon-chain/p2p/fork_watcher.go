@@ -1,8 +1,8 @@
 package p2p
 
 import (
-	"github.com/prysmaticlabs/prysm/config/params"
-	"github.com/prysmaticlabs/prysm/time/slots"
+	"github.com/prysmaticlabs/prysm/v2/config/params"
+	"github.com/prysmaticlabs/prysm/v2/time/slots"
 )
 
 // A background routine which listens for new and upcoming forks and

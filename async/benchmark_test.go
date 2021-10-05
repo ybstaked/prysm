@@ -6,8 +6,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/prysmaticlabs/prysm/async"
-	"github.com/prysmaticlabs/prysm/testing/require"
+	"github.com/prysmaticlabs/prysm/v2/async"
+	"github.com/prysmaticlabs/prysm/v2/testing/require"
 	log "github.com/sirupsen/logrus"
 )
 

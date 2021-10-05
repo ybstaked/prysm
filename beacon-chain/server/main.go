@@ -11,11 +11,11 @@ import (
 
 	"github.com/gorilla/mux"
 	joonix "github.com/joonix/log"
-	"github.com/prysmaticlabs/prysm/api/gateway"
-	beaconGateway "github.com/prysmaticlabs/prysm/beacon-chain/gateway"
-	"github.com/prysmaticlabs/prysm/beacon-chain/rpc/apimiddleware"
-	"github.com/prysmaticlabs/prysm/cmd/beacon-chain/flags"
-	_ "github.com/prysmaticlabs/prysm/runtime/maxprocs"
+	"github.com/prysmaticlabs/prysm/v2/api/gateway"
+	beaconGateway "github.com/prysmaticlabs/prysm/v2/beacon-chain/gateway"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/rpc/apimiddleware"
+	"github.com/prysmaticlabs/prysm/v2/cmd/beacon-chain/flags"
+	_ "github.com/prysmaticlabs/prysm/v2/runtime/maxprocs"
 	"github.com/sirupsen/logrus"
 )
 

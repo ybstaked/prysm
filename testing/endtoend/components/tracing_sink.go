@@ -10,8 +10,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/prysmaticlabs/prysm/testing/endtoend/helpers"
-	e2e "github.com/prysmaticlabs/prysm/testing/endtoend/params"
+	"github.com/prysmaticlabs/prysm/v2/testing/endtoend/helpers"
+	e2e "github.com/prysmaticlabs/prysm/v2/testing/endtoend/params"
 )
 
 // TracingSink to capture HTTP requests from opentracing pushes. This is meant

@@ -5,8 +5,8 @@ import (
 	"os"
 	"strconv"
 
-	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	"github.com/prysmaticlabs/prysm/testing/util"
+	ethpb "github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1"
+	"github.com/prysmaticlabs/prysm/v2/testing/util"
 )
 
 const fileBase = "0-11-0/mainnet/beaconstate"

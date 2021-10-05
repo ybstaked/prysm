@@ -10,13 +10,13 @@ import (
 	"testing"
 
 	types "github.com/prysmaticlabs/eth2-types"
-	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	"github.com/prysmaticlabs/prysm/testing/assert"
-	"github.com/prysmaticlabs/prysm/testing/require"
-	"github.com/prysmaticlabs/prysm/validator/db/kv"
-	dbtest "github.com/prysmaticlabs/prysm/validator/db/testing"
-	"github.com/prysmaticlabs/prysm/validator/slashing-protection/local/standard-protection-format/format"
-	valtest "github.com/prysmaticlabs/prysm/validator/testing"
+	ethpb "github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1"
+	"github.com/prysmaticlabs/prysm/v2/testing/assert"
+	"github.com/prysmaticlabs/prysm/v2/testing/require"
+	"github.com/prysmaticlabs/prysm/v2/validator/db/kv"
+	dbtest "github.com/prysmaticlabs/prysm/v2/validator/db/testing"
+	"github.com/prysmaticlabs/prysm/v2/validator/slashing-protection/local/standard-protection-format/format"
+	valtest "github.com/prysmaticlabs/prysm/v2/validator/testing"
 	logTest "github.com/sirupsen/logrus/hooks/test"
 )
 

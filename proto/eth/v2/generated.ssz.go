@@ -5,7 +5,7 @@ package eth
 import (
 	ssz "github.com/ferranbt/fastssz"
 	github_com_prysmaticlabs_eth2_types "github.com/prysmaticlabs/eth2-types"
-	v1 "github.com/prysmaticlabs/prysm/proto/eth/v1"
+	v1 "github.com/prysmaticlabs/prysm/v2/proto/eth/v1"
 )
 
 // MarshalSSZ ssz marshals the SignedBeaconBlockAltair object

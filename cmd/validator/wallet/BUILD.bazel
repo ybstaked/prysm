@@ -3,7 +3,7 @@ load("@prysm//tools/go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["wallet.go"],
-    importpath = "github.com/prysmaticlabs/prysm/cmd/validator/wallet",
+    importpath = "github.com/prysmaticlabs/prysm/v2/cmd/validator/wallet",
     visibility = ["//visibility:public"],
     deps = [
         "//cmd:go_default_library",

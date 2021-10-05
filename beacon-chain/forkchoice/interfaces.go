@@ -4,7 +4,7 @@ import (
 	"context"
 
 	types "github.com/prysmaticlabs/eth2-types"
-	"github.com/prysmaticlabs/prysm/beacon-chain/forkchoice/protoarray"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/forkchoice/protoarray"
 )
 
 // ForkChoicer represents the full fork choice interface composed of all of the sub-interfaces.

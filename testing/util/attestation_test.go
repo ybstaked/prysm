@@ -3,10 +3,10 @@ package util
 import (
 	"testing"
 
-	"github.com/prysmaticlabs/prysm/config/params"
-	v1 "github.com/prysmaticlabs/prysm/proto/eth/v1"
-	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	"github.com/prysmaticlabs/prysm/testing/require"
+	"github.com/prysmaticlabs/prysm/v2/config/params"
+	v1 "github.com/prysmaticlabs/prysm/v2/proto/eth/v1"
+	ethpb "github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1"
+	"github.com/prysmaticlabs/prysm/v2/testing/require"
 )
 
 func TestHydrateAttestation(t *testing.T) {

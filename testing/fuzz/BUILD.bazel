@@ -23,7 +23,7 @@ ssz_gen_marshal(
     ],
 )
 
-IMPORT_PATH = "github.com/prysmaticlabs/prysm/fuzz"
+IMPORT_PATH = "github.com/prysmaticlabs/prysm/v2/fuzz"
 
 COMMON_DEPS = [
     "//beacon-chain/state/v1:go_default_library",
@@ -163,7 +163,7 @@ go_library(
         "state_fuzz.go",
         ":ssz_generated_files",  # keep
     ],
-    importpath = "github.com/prysmaticlabs/prysm/fuzz",
+    importpath = "github.com/prysmaticlabs/prysm/v2/fuzz",
     visibility = ["//visibility:public"],
     deps = [
         "//beacon-chain/blockchain:go_default_library",
@@ -211,7 +211,7 @@ go_library(
         "inputs.go",
         ":ssz_generated_files",  # keep
     ],
-    importpath = "github.com/prysmaticlabs/prysm/fuzz",
+    importpath = "github.com/prysmaticlabs/prysm/v2/fuzz",
     visibility = ["//visibility:public"],
     deps = [
         "//proto/prysm/v1alpha1:go_default_library",

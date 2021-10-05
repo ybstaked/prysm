@@ -1,7 +1,7 @@
 package blockchain
 
 import (
-	"github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1/block"
+	"github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1/block"
 )
 
 // This saves a beacon block to the initial sync blocks cache.

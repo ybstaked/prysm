@@ -5,14 +5,14 @@ import (
 	"testing"
 
 	types "github.com/prysmaticlabs/eth2-types"
-	blockchainmock "github.com/prysmaticlabs/prysm/beacon-chain/blockchain/testing"
-	"github.com/prysmaticlabs/prysm/beacon-chain/rpc/testutil"
-	"github.com/prysmaticlabs/prysm/encoding/bytesutil"
-	ethpbv1 "github.com/prysmaticlabs/prysm/proto/eth/v1"
-	ethpbv2 "github.com/prysmaticlabs/prysm/proto/eth/v2"
-	"github.com/prysmaticlabs/prysm/testing/assert"
-	"github.com/prysmaticlabs/prysm/testing/require"
-	"github.com/prysmaticlabs/prysm/testing/util"
+	blockchainmock "github.com/prysmaticlabs/prysm/v2/beacon-chain/blockchain/testing"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/rpc/testutil"
+	"github.com/prysmaticlabs/prysm/v2/encoding/bytesutil"
+	ethpbv1 "github.com/prysmaticlabs/prysm/v2/proto/eth/v1"
+	ethpbv2 "github.com/prysmaticlabs/prysm/v2/proto/eth/v2"
+	"github.com/prysmaticlabs/prysm/v2/testing/assert"
+	"github.com/prysmaticlabs/prysm/v2/testing/require"
+	"github.com/prysmaticlabs/prysm/v2/testing/util"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 

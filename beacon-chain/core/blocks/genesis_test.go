@@ -3,9 +3,9 @@ package blocks_test
 import (
 	"testing"
 
-	"github.com/prysmaticlabs/prysm/beacon-chain/core/blocks"
-	"github.com/prysmaticlabs/prysm/encoding/bytesutil"
-	"github.com/prysmaticlabs/prysm/testing/assert"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/core/blocks"
+	"github.com/prysmaticlabs/prysm/v2/encoding/bytesutil"
+	"github.com/prysmaticlabs/prysm/v2/testing/assert"
 )
 
 func TestGenesisBlock_InitializedCorrectly(t *testing.T) {

@@ -4,10 +4,10 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/prysmaticlabs/prysm/crypto/bls/common"
-	"github.com/prysmaticlabs/prysm/crypto/rand"
-	"github.com/prysmaticlabs/prysm/testing/assert"
-	"github.com/prysmaticlabs/prysm/testing/require"
+	"github.com/prysmaticlabs/prysm/v2/crypto/bls/common"
+	"github.com/prysmaticlabs/prysm/v2/crypto/rand"
+	"github.com/prysmaticlabs/prysm/v2/testing/assert"
+	"github.com/prysmaticlabs/prysm/v2/testing/require"
 )
 
 func TestDisallowZeroSecretKeys(t *testing.T) {

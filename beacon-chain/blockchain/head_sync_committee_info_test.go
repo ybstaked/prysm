@@ -5,14 +5,14 @@ import (
 	"testing"
 
 	types "github.com/prysmaticlabs/eth2-types"
-	"github.com/prysmaticlabs/prysm/beacon-chain/cache"
-	"github.com/prysmaticlabs/prysm/beacon-chain/core/signing"
-	dbtest "github.com/prysmaticlabs/prysm/beacon-chain/db/testing"
-	"github.com/prysmaticlabs/prysm/beacon-chain/state/stategen"
-	"github.com/prysmaticlabs/prysm/config/params"
-	"github.com/prysmaticlabs/prysm/testing/require"
-	"github.com/prysmaticlabs/prysm/testing/util"
-	"github.com/prysmaticlabs/prysm/time/slots"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/cache"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/core/signing"
+	dbtest "github.com/prysmaticlabs/prysm/v2/beacon-chain/db/testing"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/state/stategen"
+	"github.com/prysmaticlabs/prysm/v2/config/params"
+	"github.com/prysmaticlabs/prysm/v2/testing/require"
+	"github.com/prysmaticlabs/prysm/v2/testing/util"
+	"github.com/prysmaticlabs/prysm/v2/time/slots"
 )
 
 func TestService_headSyncCommitteeFetcher_Errors(t *testing.T) {

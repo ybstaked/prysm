@@ -10,11 +10,11 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/trie"
-	dbutil "github.com/prysmaticlabs/prysm/beacon-chain/db/testing"
-	mockPOW "github.com/prysmaticlabs/prysm/beacon-chain/powchain/testing"
-	contracts "github.com/prysmaticlabs/prysm/contracts/deposit"
-	"github.com/prysmaticlabs/prysm/testing/assert"
-	"github.com/prysmaticlabs/prysm/testing/require"
+	dbutil "github.com/prysmaticlabs/prysm/v2/beacon-chain/db/testing"
+	mockPOW "github.com/prysmaticlabs/prysm/v2/beacon-chain/powchain/testing"
+	contracts "github.com/prysmaticlabs/prysm/v2/contracts/deposit"
+	"github.com/prysmaticlabs/prysm/v2/testing/assert"
+	"github.com/prysmaticlabs/prysm/v2/testing/require"
 )
 
 var endpoint = "http://127.0.0.1"

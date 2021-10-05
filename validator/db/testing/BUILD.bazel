@@ -3,7 +3,7 @@ load("@prysm//tools/go:def.bzl", "go_library", "go_test")
 go_library(
     name = "go_default_library",
     srcs = ["setup_db.go"],
-    importpath = "github.com/prysmaticlabs/prysm/validator/db/testing",
+    importpath = "github.com/prysmaticlabs/prysm/v2/validator/db/testing",
     visibility = ["//validator:__subpackages__"],
     deps = [
         "//validator/db/iface:go_default_library",

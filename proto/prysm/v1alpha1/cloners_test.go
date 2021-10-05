@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"testing"
 
-	v1alpha1 "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	"github.com/prysmaticlabs/prysm/testing/assert"
+	v1alpha1 "github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1"
+	"github.com/prysmaticlabs/prysm/v2/testing/assert"
 )
 
 func TestCopyETH1Data(t *testing.T) {

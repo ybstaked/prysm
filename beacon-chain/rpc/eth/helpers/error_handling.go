@@ -1,7 +1,7 @@
 package helpers
 
 import (
-	"github.com/prysmaticlabs/prysm/beacon-chain/rpc/statefetcher"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/rpc/statefetcher"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

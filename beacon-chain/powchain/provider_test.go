@@ -3,8 +3,8 @@ package powchain
 import (
 	"testing"
 
-	"github.com/prysmaticlabs/prysm/network/authorization"
-	"github.com/prysmaticlabs/prysm/testing/assert"
+	"github.com/prysmaticlabs/prysm/v2/network/authorization"
+	"github.com/prysmaticlabs/prysm/v2/testing/assert"
 	logTest "github.com/sirupsen/logrus/hooks/test"
 )
 

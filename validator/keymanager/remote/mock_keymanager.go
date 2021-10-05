@@ -3,9 +3,9 @@ package remote
 import (
 	"context"
 
-	"github.com/prysmaticlabs/prysm/async/event"
-	"github.com/prysmaticlabs/prysm/crypto/bls"
-	validatorpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1/validator-client"
+	"github.com/prysmaticlabs/prysm/v2/async/event"
+	"github.com/prysmaticlabs/prysm/v2/crypto/bls"
+	validatorpb "github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1/validator-client"
 )
 
 // MockKeymanager --

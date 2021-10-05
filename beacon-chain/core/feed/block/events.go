@@ -3,7 +3,7 @@
 package block
 
 import (
-	"github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1/block"
+	"github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1/block"
 )
 
 const (

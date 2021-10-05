@@ -7,18 +7,18 @@ import (
 	"github.com/golang/snappy"
 	"github.com/pkg/errors"
 	types "github.com/prysmaticlabs/eth2-types"
-	"github.com/prysmaticlabs/prysm/beacon-chain/core/helpers"
-	"github.com/prysmaticlabs/prysm/beacon-chain/state"
-	"github.com/prysmaticlabs/prysm/beacon-chain/state/genesis"
-	v1 "github.com/prysmaticlabs/prysm/beacon-chain/state/v1"
-	v2 "github.com/prysmaticlabs/prysm/beacon-chain/state/v2"
-	"github.com/prysmaticlabs/prysm/config/features"
-	"github.com/prysmaticlabs/prysm/config/params"
-	"github.com/prysmaticlabs/prysm/encoding/bytesutil"
-	"github.com/prysmaticlabs/prysm/monitoring/tracing"
-	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	"github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1/wrapper"
-	"github.com/prysmaticlabs/prysm/time/slots"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/core/helpers"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/state"
+	"github.com/prysmaticlabs/prysm/v2/beacon-chain/state/genesis"
+	v1 "github.com/prysmaticlabs/prysm/v2/beacon-chain/state/v1"
+	v2 "github.com/prysmaticlabs/prysm/v2/beacon-chain/state/v2"
+	"github.com/prysmaticlabs/prysm/v2/config/features"
+	"github.com/prysmaticlabs/prysm/v2/config/params"
+	"github.com/prysmaticlabs/prysm/v2/encoding/bytesutil"
+	"github.com/prysmaticlabs/prysm/v2/monitoring/tracing"
+	ethpb "github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1"
+	"github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1/wrapper"
+	"github.com/prysmaticlabs/prysm/v2/time/slots"
 	bolt "go.etcd.io/bbolt"
 	"go.opencensus.io/trace"
 )
@@ -193,7 +193,7 @@ func (s *Store) SaveStatesEfficient(ctx context.Context, states []state.ReadOnly
 			// thread. But while storing the state object, we should not store the
 			// validator entries.To bring the gap closer, we empty the validators
 			// just before Put() and repopulate that state with original validators.
-			// look at issue https://github.com/prysmaticlabs/prysm/issues/9262.
+			// look at issue https://github.com/prysmaticlabs/prysm/v2/issues/9262.
 			switch rawType := states[i].InnerStateUnsafe().(type) {
 			case *ethpb.BeaconState:
 				pbState, err := v1.ProtobufBeaconState(rawType)

@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	fuzz "github.com/google/gofuzz"
-	v1 "github.com/prysmaticlabs/prysm/beacon-chain/state/v1"
-	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	"github.com/prysmaticlabs/prysm/testing/require"
+	v1 "github.com/prysmaticlabs/prysm/v2/beacon-chain/state/v1"
+	ethpb "github.com/prysmaticlabs/prysm/v2/proto/prysm/v1alpha1"
+	"github.com/prysmaticlabs/prysm/v2/testing/require"
 )
 
 func TestFuzzFinalUpdates_10000(t *testing.T) {

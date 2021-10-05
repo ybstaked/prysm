@@ -3,7 +3,7 @@ package protoarray
 import (
 	"context"
 
-	"github.com/prysmaticlabs/prysm/config/params"
+	"github.com/prysmaticlabs/prysm/v2/config/params"
 	"go.opencensus.io/trace"
 )
 

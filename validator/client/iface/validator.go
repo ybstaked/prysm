@@ -6,7 +6,7 @@ import (
 	"time"
 
 	types "github.com/prysmaticlabs/eth2-types"
-	"github.com/prysmaticlabs/prysm/validator/keymanager"
+	"github.com/prysmaticlabs/prysm/v2/validator/keymanager"
 )
 
 // ErrConnectionIssue represents a connection problem.

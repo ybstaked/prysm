@@ -3,7 +3,7 @@ package epoch_processing
 import (
 	"testing"
 
-	"github.com/prysmaticlabs/prysm/testing/spectest/shared/altair/epoch_processing"
+	"github.com/prysmaticlabs/prysm/v2/testing/spectest/shared/altair/epoch_processing"
 )
 
 func TestMinimal_Altair_EpochProcessing_RewardsAndPenalties(t *testing.T) {

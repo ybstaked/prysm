@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	types "github.com/prysmaticlabs/eth2-types"
-	"github.com/prysmaticlabs/prysm/crypto/hash"
+	"github.com/prysmaticlabs/prysm/v2/crypto/hash"
 	"gopkg.in/yaml.v2"
 )
 

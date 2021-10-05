@@ -3,7 +3,7 @@ package fuzz
 import (
 	"os"
 
-	"github.com/prysmaticlabs/prysm/config/features"
+	"github.com/prysmaticlabs/prysm/v2/config/features"
 )
 
 // EnvBls defines an environment variable name to check whether BLS is enabled or not.

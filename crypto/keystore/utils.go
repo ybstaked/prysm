@@ -25,8 +25,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/prysmaticlabs/prysm/crypto/bls"
-	prysmTime "github.com/prysmaticlabs/prysm/time"
+	"github.com/prysmaticlabs/prysm/v2/crypto/bls"
+	prysmTime "github.com/prysmaticlabs/prysm/v2/time"
 )
 
 func aesCTRXOR(key, inText, iv []byte) ([]byte, error) {

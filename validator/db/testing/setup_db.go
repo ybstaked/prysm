@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/prysmaticlabs/prysm/validator/db/iface"
-	"github.com/prysmaticlabs/prysm/validator/db/kv"
+	"github.com/prysmaticlabs/prysm/v2/validator/db/iface"
+	"github.com/prysmaticlabs/prysm/v2/validator/db/kv"
 )
 
 // SetupDB instantiates and returns a DB instance for the validator client.

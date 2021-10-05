@@ -22,7 +22,7 @@ go_library(
         "log.go",
         "node.go",
     ],
-    importpath = "github.com/prysmaticlabs/prysm/validator/node",
+    importpath = "github.com/prysmaticlabs/prysm/v2/validator/node",
     visibility = [
         "//cmd/validator:__subpackages__",
         "//validator:__subpackages__",

@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/prysmaticlabs/prysm/testing/assert"
-	"github.com/prysmaticlabs/prysm/testing/require"
+	"github.com/prysmaticlabs/prysm/v2/testing/assert"
+	"github.com/prysmaticlabs/prysm/v2/testing/require"
 )
 
 func TestValidatePasswordInput(t *testing.T) {

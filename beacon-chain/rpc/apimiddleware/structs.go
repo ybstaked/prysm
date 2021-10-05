@@ -1,7 +1,7 @@
 package apimiddleware
 
 import (
-	"github.com/prysmaticlabs/prysm/api/gateway/apimiddleware"
+	"github.com/prysmaticlabs/prysm/v2/api/gateway/apimiddleware"
 )
 
 // genesisResponseJson is used in /beacon/genesis API endpoint.

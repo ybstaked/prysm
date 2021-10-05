@@ -19,7 +19,7 @@ package event_test
 import (
 	"fmt"
 
-	"github.com/prysmaticlabs/prysm/async/event"
+	"github.com/prysmaticlabs/prysm/v2/async/event"
 )
 
 func ExampleNewSubscription() {
