@@ -8,7 +8,9 @@ import (
 	types "github.com/prysmaticlabs/eth2-types"
 	slashertypes "github.com/prysmaticlabs/prysm/beacon-chain/slasher/types"
 	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
+	"github.com/prysmaticlabs/prysm/time"
 	"github.com/prysmaticlabs/prysm/time/slots"
+	"github.com/sirupsen/logrus"
 	"go.opencensus.io/trace"
 )
 
@@ -23,6 +25,7 @@ func (s *Service) checkSlashableAttestations(
 
 	// TODO(#8331): Consider using goroutines and wait groups here.
 	groupedAtts := s.groupByValidatorChunkIndex(atts)
+	log.WithField("numBatches", len(groupedAtts)).Debug("Grouping attestations by validator chunk index")
 	for validatorChunkIdx, batch := range groupedAtts {
 		attSlashings, err := s.detectAllAttesterSlashings(ctx, &chunkUpdateArgs{
 			validatorChunkIndex: validatorChunkIdx,
@@ -58,15 +61,26 @@ func (s *Service) detectAllAttesterSlashings(
 	attestations []*slashertypes.IndexedAttestationWrapper,
 ) ([]*ethpb.AttesterSlashing, error) {
 	// Check for double votes.
+	log.Debugf("Checking double votes for %d attestations", len(attestations))
+	start := time.Now()
 	doubleVoteSlashings, err := s.checkDoubleVotes(ctx, attestations)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not check slashable double votes")
 	}
+	log.WithField(
+		"elapsed", time.Since(start),
+	).Debugf("Done checking double votes for %d attestations", len(attestations))
 
 	// Group attestations by chunk index.
 	groupedAtts := s.groupByChunkIndex(attestations)
+	log.WithField("numChunks", len(groupedAtts)).Debugf("Grouped %d attestations by chunk index", len(attestations))
 
 	// Update min and max spans and retrieve any detected slashable offenses.
+	log.WithFields(logrus.Fields{
+		"validatorChunkIdx": args.validatorChunkIndex,
+		"currentEpoch":      args.currentEpoch,
+	}).Debug("Updating min spans for attestations")
+	start = time.Now()
 	surroundingSlashings, err := s.updateSpans(ctx, &chunkUpdateArgs{
 		kind:                slashertypes.MinSpan,
 		validatorChunkIndex: args.validatorChunkIndex,
@@ -79,7 +93,15 @@ func (s *Service) detectAllAttesterSlashings(
 			args.validatorChunkIndex,
 		)
 	}
+	log.WithField(
+		"elapsed", time.Since(start),
+	).Debugf("Done updating min spans for attestations")
 
+	log.WithFields(logrus.Fields{
+		"validatorChunkIdx": args.validatorChunkIndex,
+		"currentEpoch":      args.currentEpoch,
+	}).Debug("Updating max spans for attestations")
+	start = time.Now()
 	surroundedSlashings, err := s.updateSpans(ctx, &chunkUpdateArgs{
 		kind:                slashertypes.MaxSpan,
 		validatorChunkIndex: args.validatorChunkIndex,
@@ -92,6 +114,9 @@ func (s *Service) detectAllAttesterSlashings(
 			args.validatorChunkIndex,
 		)
 	}
+	log.WithField(
+		"elapsed", time.Since(start),
+	).Debugf("Done updating max spans for attestations")
 
 	// Consolidate all slashings into a slice.
 	slashings := make([]*ethpb.AttesterSlashing, 0, len(doubleVoteSlashings)+len(surroundingSlashings)+len(surroundedSlashings))
@@ -183,6 +208,8 @@ func (s *Service) updateSpans(
 	ctx, span := trace.StartSpan(ctx, "Slasher.updateSpans")
 	defer span.End()
 	// Determine the chunk indices we need to use for slashing detection.
+	log.Debug("Determining chunk indices to update for validators")
+	start := time.Now()
 	validatorIndices := s.params.validatorIndicesInChunk(args.validatorChunkIndex)
 	chunkIndices, err := s.determineChunksToUpdateForValidators(ctx, args, validatorIndices)
 	if err != nil {
@@ -192,7 +219,15 @@ func (s *Service) updateSpans(
 			validatorIndices,
 		)
 	}
+	log.WithFields(logrus.Fields{
+		"numChunkIndices":     len(chunkIndices),
+		"numValidatorIndices": len(validatorIndices),
+		"elapsed":             time.Since(start),
+	}).Debug("Done determining chunk indices to update for validators")
 	// Load the required chunks from disk.
+
+	log.Debugf("Loading chunks for %d chunk indices", len(chunkIndices))
+	start = time.Now()
 	chunksByChunkIdx, err := s.loadChunks(ctx, args, chunkIndices)
 	if err != nil {
 		return nil, errors.Wrapf(
@@ -201,10 +236,16 @@ func (s *Service) updateSpans(
 			chunkIndices,
 		)
 	}
+	log.WithFields(logrus.Fields{
+		"numChunkIndices": len(chunkIndices),
+		"elapsed":         time.Since(start),
+	}).Debug("Done loading chunks from disk")
 
 	// Apply the attestations to the related chunks and find any
 	// slashings along the way.
 	slashings := make([]*ethpb.AttesterSlashing, 0)
+	log.Debug("Applying attestations for validators")
+	start = time.Now()
 	for _, attestationBatch := range attestationsByChunkIdx {
 		for _, att := range attestationBatch {
 			for _, validatorIdx := range att.IndexedAttestation.AttestingIndices {
@@ -243,9 +284,15 @@ func (s *Service) updateSpans(
 			}
 		}
 	}
+	log.WithField("elapsed", time.Since(start)).Debug("Done applying attestations for validators")
 
-	// Write the updated chunks to disk.
-	return slashings, s.saveUpdatedChunks(ctx, args, chunksByChunkIdx)
+	log.Debug("Saving updated chunks to disk")
+	start = time.Now()
+	if err := s.saveUpdatedChunks(ctx, args, chunksByChunkIdx); err != nil {
+		return nil, err
+	}
+	log.WithField("elapsed", time.Since(start)).Debug("Done saving updated chunks to disk")
+	return slashings, nil
 }
 
 // For a list of validator indices, we retrieve their latest written epoch. Then, for each
