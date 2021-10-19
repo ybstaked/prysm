@@ -63,7 +63,7 @@ func TestSlasherTimes(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NoError(t, srv.serviceCfg.Database.SaveAttestationRecordsForValidators(ctx, indexedAttWrappers))
-	start := time.Now()
+	//start := time.Now()
 
 	// Slashable attestations main checks.
 	t.Log("Checking slashable attestations...")
@@ -87,9 +87,10 @@ func TestSlasherTimes(t *testing.T) {
 			time.Since(startInner),
 			len(batch),
 		)
+		break // Break early so we can pprof a single batch detection.
 	}
-	require.NoError(t, srv.serviceCfg.Database.SaveLastEpochWrittenForValidators(ctx, indices, currentEpoch))
-	t.Logf("Took %v to check slashable attestations", time.Since(start))
+	//require.NoError(t, srv.serviceCfg.Database.SaveLastEpochWrittenForValidators(ctx, indices, currentEpoch))
+	//t.Logf("Took %v to check slashable attestations", time.Since(start))
 }
 
 func readCommitteesFromDisk(slot types.Slot) ([][]types.ValidatorIndex, error) {
