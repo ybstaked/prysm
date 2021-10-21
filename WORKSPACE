@@ -76,9 +76,9 @@ http_archive(
 
 http_archive(
     name = "io_bazel_rules_docker",
-    sha256 = "59d5b42ac315e7eadffa944e86e90c2990110a1c8075f1cd145f487e999d22b3",
-    strip_prefix = "rules_docker-0.17.0",
-    urls = ["https://github.com/bazelbuild/rules_docker/releases/download/v0.17.0/rules_docker-v0.17.0.tar.gz"],
+    sha256 = "1f4e59843b61981a96835dc4ac377ad4da9f8c334ebe5e0bb3f58f80c09735f4",
+    strip_prefix = "rules_docker-0.19.0",
+    urls = ["https://github.com/bazelbuild/rules_docker/releases/download/v0.19.0/rules_docker-v0.19.0.tar.gz"],
 )
 
 http_archive(
@@ -140,6 +140,34 @@ load(
 )
 
 container_pull(
+    name = "cc_image_base",
+    digest = "sha256:2c4bb6b7236db0a55ec54ba8845e4031f5db2be957ac61867872bf42e56c4deb",
+    registry = "gcr.io",
+    repository = "distroless/cc",
+)
+
+container_pull(
+    name = "cc_debug_image_base",
+    digest = "sha256:3680c61e81f68fc00bfb5e1ec65e8e678aaafa7c5f056bc2681c29527ebbb30c",
+    registry = "gcr.io",
+    repository = "distroless/cc",
+)
+
+container_pull(
+    name = "go_image_base",
+    digest = "sha256:ba7a315f86771332e76fa9c3d423ecfdbb8265879c6f1c264d6fff7d4fa460a4",
+    registry = "gcr.io",
+    repository = "distroless/base",
+)
+
+container_pull(
+    name = "go_debug_image_base",
+    digest = "sha256:efd8711717d9e9b5d0dbb20ea10876dab0609c923bc05321b912f9239090ca80",
+    registry = "gcr.io",
+    repository = "distroless/base",
+)
+
+container_pull(
     name = "alpine_cc_linux_amd64",
     digest = "sha256:752aa0c9a88461ffc50c5267bb7497ef03a303e38b2c8f7f2ded9bebe5f1f00e",
     registry = "index.docker.io",
@@ -197,7 +225,9 @@ filegroup(
     url = "https://github.com/eth2-clients/slashing-protection-interchange-tests/archive/b8413ca42dc92308019d0d4db52c87e9e125c4e9.tar.gz",
 )
 
-consensus_spec_version = "v1.1.0-beta.1"
+consensus_spec_version = "v1.1.3"
+
+bls_test_version = "v0.1.1"
 
 http_archive(
     name = "consensus_spec_tests_general",
@@ -211,7 +241,7 @@ filegroup(
     visibility = ["//visibility:public"],
 )
     """,
-    sha256 = "e9b4cc60a3e676c6b4a9348424e44cff1ebada603ffb31b0df600dbd70e7fbf6",
+    sha256 = "e572f8c57e2dbbaeee056a600dc9d08396010dd5134a3a95e43c540470acf6f5",
     url = "https://github.com/ethereum/consensus-spec-tests/releases/download/%s/general.tar.gz" % consensus_spec_version,
 )
 
@@ -227,7 +257,7 @@ filegroup(
     visibility = ["//visibility:public"],
 )
     """,
-    sha256 = "cf82dc729ffe7b924f852e57d1973e1a6377c5b52acc903c953277fa9b4e6de8",
+    sha256 = "7e2f62eaae9fd541690cc61d252556d0c5deb585ca1873aacbeb5b02d06f1362",
     url = "https://github.com/ethereum/consensus-spec-tests/releases/download/%s/minimal.tar.gz" % consensus_spec_version,
 )
 
@@ -243,7 +273,7 @@ filegroup(
     visibility = ["//visibility:public"],
 )
     """,
-    sha256 = "6c6792375b81858037014e282d28a64b0cf12e12daf16054265c85403b8b329f",
+    sha256 = "05cbb89810c8acd6c57c4773ddfd167305cd4539960e9b4d7b69e1a988b35ad2",
     url = "https://github.com/ethereum/consensus-spec-tests/releases/download/%s/mainnet.tar.gz" % consensus_spec_version,
 )
 
@@ -258,9 +288,40 @@ filegroup(
     visibility = ["//visibility:public"],
 )
     """,
-    sha256 = "6a039696cefe9c1a35f677d118880afa71bbd487f75110a943618872ccdde170",
+    sha256 = "0cef67b08448f7eb43bf66c464451c9e7a4852df8ef90555cca6d440e3436882",
     strip_prefix = "consensus-specs-" + consensus_spec_version[1:],
     url = "https://github.com/ethereum/consensus-specs/archive/refs/tags/%s.tar.gz" % consensus_spec_version,
+)
+
+http_archive(
+    name = "bls_spec_tests",
+    build_file_content = """
+filegroup(
+    name = "test_data",
+    srcs = glob([
+        "**/*.yaml",
+    ]),
+    visibility = ["//visibility:public"],
+)
+    """,
+    sha256 = "93c7d006e7c5b882cbd11dc9ec6c5d0e07f4a8c6b27a32f964eb17cf2db9763a",
+    url = "https://github.com/ethereum/bls12-381-tests/releases/download/%s/bls_tests_yaml.tar.gz" % bls_test_version,
+)
+
+http_archive(
+    name = "eth2_networks",
+    build_file_content = """
+filegroup(
+    name = "configs",
+    srcs = glob([
+        "shared/**/config.yaml",
+    ]),
+    visibility = ["//visibility:public"],
+)
+    """,
+    sha256 = "9dc47bf6b14aed7fac8833e35ab83a69131b43fa5789b3256bf1ac3d4861aeb8",
+    strip_prefix = "eth2-networks-7fa1b868985ee24aad65567f9250cf7fa86f97b1",
+    url = "https://github.com/eth2-clients/eth2-networks/archive/7fa1b868985ee24aad65567f9250cf7fa86f97b1.tar.gz",
 )
 
 http_archive(
@@ -279,27 +340,6 @@ git_repository(
 
 # Group the sources of the library so that CMake rule have access to it
 all_content = """filegroup(name = "all", srcs = glob(["**"]), visibility = ["//visibility:public"])"""
-
-http_archive(
-    name = "rules_foreign_cc",
-    sha256 = "b85ce66a3410f7370d1a9a61dfe3a29c7532b7637caeb2877d8d0dfd41d77abb",
-    strip_prefix = "rules_foreign_cc-3515b20a2417c4dd51c8a4a8cac1f6ecf3c6d934",
-    url = "https://github.com/bazelbuild/rules_foreign_cc/archive/3515b20a2417c4dd51c8a4a8cac1f6ecf3c6d934.zip",
-)
-
-load("@rules_foreign_cc//:workspace_definitions.bzl", "rules_foreign_cc_dependencies")
-
-rules_foreign_cc_dependencies([
-    "@prysm//:built_cmake_toolchain",
-])
-
-http_archive(
-    name = "librdkafka",
-    build_file_content = all_content,
-    sha256 = "3b99a36c082a67ef6295eabd4fb3e32ab0bff7c6b0d397d6352697335f4e57eb",
-    strip_prefix = "librdkafka-1.4.2",
-    urls = ["https://github.com/edenhill/librdkafka/archive/v1.4.2.tar.gz"],
-)
 
 http_archive(
     name = "sigp_beacon_fuzz_corpora",
@@ -354,10 +394,6 @@ load(
 )
 
 _cc_image_repos()
-
-load("@com_github_ethereum_go_ethereum//:deps.bzl", "geth_dependencies")
-
-geth_dependencies()
 
 load("@io_bazel_rules_go//extras:embed_data_deps.bzl", "go_embed_data_dependencies")
 

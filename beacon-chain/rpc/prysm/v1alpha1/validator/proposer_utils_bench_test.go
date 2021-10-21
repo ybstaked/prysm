@@ -4,13 +4,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/prysmaticlabs/prysm/shared/copyutil"
-
 	"github.com/prysmaticlabs/go-bitfield"
+	"github.com/prysmaticlabs/prysm/config/features"
+	"github.com/prysmaticlabs/prysm/config/params"
 	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	aggtesting "github.com/prysmaticlabs/prysm/shared/aggregation/testing"
-	"github.com/prysmaticlabs/prysm/shared/featureconfig"
-	"github.com/prysmaticlabs/prysm/shared/params"
+	aggtesting "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1/attestation/aggregation/testing"
 )
 
 func BenchmarkProposerAtts_sortByProfitability(b *testing.B) {
@@ -49,7 +47,7 @@ func BenchmarkProposerAtts_sortByProfitability(b *testing.B) {
 	runner := func(atts []*ethpb.Attestation) {
 		attsCopy := make(proposerAtts, len(atts))
 		for i, att := range atts {
-			attsCopy[i] = copyutil.CopyAttestation(att)
+			attsCopy[i] = ethpb.CopyAttestation(att)
 		}
 		attsCopy.sortByProfitability()
 	}
@@ -57,7 +55,7 @@ func BenchmarkProposerAtts_sortByProfitability(b *testing.B) {
 	for _, tt := range tests {
 		b.Run(fmt.Sprintf("naive_%s", tt.name), func(b *testing.B) {
 			b.StopTimer()
-			resetCfg := featureconfig.InitWithReset(&featureconfig.Flags{
+			resetCfg := features.InitWithReset(&features.Flags{
 				ProposerAttsSelectionUsingMaxCover: false,
 			})
 			defer resetCfg()
@@ -69,7 +67,7 @@ func BenchmarkProposerAtts_sortByProfitability(b *testing.B) {
 		})
 		b.Run(fmt.Sprintf("max-cover_%s", tt.name), func(b *testing.B) {
 			b.StopTimer()
-			resetCfg := featureconfig.InitWithReset(&featureconfig.Flags{
+			resetCfg := features.InitWithReset(&features.Flags{
 				ProposerAttsSelectionUsingMaxCover: true,
 			})
 			defer resetCfg()

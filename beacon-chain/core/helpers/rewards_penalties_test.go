@@ -1,14 +1,17 @@
 package helpers
 
 import (
+	"math"
 	"testing"
 
 	types "github.com/prysmaticlabs/eth2-types"
+	"github.com/prysmaticlabs/prysm/beacon-chain/core/time"
 	v1 "github.com/prysmaticlabs/prysm/beacon-chain/state/v1"
+	"github.com/prysmaticlabs/prysm/config/features"
+	"github.com/prysmaticlabs/prysm/config/params"
 	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	"github.com/prysmaticlabs/prysm/shared/params"
-	"github.com/prysmaticlabs/prysm/shared/testutil/assert"
-	"github.com/prysmaticlabs/prysm/shared/testutil/require"
+	"github.com/prysmaticlabs/prysm/testing/assert"
+	"github.com/prysmaticlabs/prysm/testing/require"
 )
 
 func TestTotalBalance_OK(t *testing.T) {
@@ -48,6 +51,54 @@ func TestGetBalance_OK(t *testing.T) {
 		state, err := v1.InitializeFromProto(&ethpb.BeaconState{Balances: test.b})
 		require.NoError(t, err)
 		assert.Equal(t, test.b[test.i], state.Balances()[test.i], "Incorrect Validator balance")
+	}
+}
+
+func TestTotalActiveBalance(t *testing.T) {
+	tests := []struct {
+		vCount int
+	}{
+		{1},
+		{10},
+		{10000},
+	}
+	for _, test := range tests {
+		validators := make([]*ethpb.Validator, 0)
+		for i := 0; i < test.vCount; i++ {
+			validators = append(validators, &ethpb.Validator{EffectiveBalance: params.BeaconConfig().MaxEffectiveBalance, ExitEpoch: 1})
+		}
+		state, err := v1.InitializeFromProto(&ethpb.BeaconState{Validators: validators})
+		require.NoError(t, err)
+		bal, err := TotalActiveBalance(state)
+		require.NoError(t, err)
+		require.Equal(t, uint64(test.vCount)*params.BeaconConfig().MaxEffectiveBalance, bal)
+	}
+}
+
+func TestTotalActiveBalance_WithCache(t *testing.T) {
+	resetCfg := features.InitWithReset(&features.Flags{
+		EnableActiveBalanceCache: true,
+	})
+	defer resetCfg()
+
+	tests := []struct {
+		vCount    int
+		wantCount int
+	}{
+		{vCount: 1, wantCount: 1},
+		{vCount: 10, wantCount: 10},
+		{vCount: 10000, wantCount: 10000},
+	}
+	for _, test := range tests {
+		validators := make([]*ethpb.Validator, 0)
+		for i := 0; i < test.vCount; i++ {
+			validators = append(validators, &ethpb.Validator{EffectiveBalance: params.BeaconConfig().MaxEffectiveBalance, ExitEpoch: 1})
+		}
+		state, err := v1.InitializeFromProto(&ethpb.BeaconState{Validators: validators})
+		require.NoError(t, err)
+		bal, err := TotalActiveBalance(state)
+		require.NoError(t, err)
+		require.Equal(t, uint64(test.wantCount)*params.BeaconConfig().MaxEffectiveBalance, bal)
 	}
 }
 
@@ -107,24 +158,24 @@ func TestFinalityDelay(t *testing.T) {
 	finalizedEpoch := types.Epoch(0)
 	// Set values for each test case
 	setVal := func() {
-		prevEpoch = PrevEpoch(beaconState)
+		prevEpoch = time.PrevEpoch(beaconState)
 		finalizedEpoch = beaconState.FinalizedCheckpointEpoch()
 	}
 	setVal()
 	d := FinalityDelay(prevEpoch, finalizedEpoch)
-	w := PrevEpoch(beaconState) - beaconState.FinalizedCheckpointEpoch()
+	w := time.PrevEpoch(beaconState) - beaconState.FinalizedCheckpointEpoch()
 	assert.Equal(t, w, d, "Did not get wanted finality delay")
 
 	require.NoError(t, beaconState.SetFinalizedCheckpoint(&ethpb.Checkpoint{Epoch: 4}))
 	setVal()
 	d = FinalityDelay(prevEpoch, finalizedEpoch)
-	w = PrevEpoch(beaconState) - beaconState.FinalizedCheckpointEpoch()
+	w = time.PrevEpoch(beaconState) - beaconState.FinalizedCheckpointEpoch()
 	assert.Equal(t, w, d, "Did not get wanted finality delay")
 
 	require.NoError(t, beaconState.SetFinalizedCheckpoint(&ethpb.Checkpoint{Epoch: 5}))
 	setVal()
 	d = FinalityDelay(prevEpoch, finalizedEpoch)
-	w = PrevEpoch(beaconState) - beaconState.FinalizedCheckpointEpoch()
+	w = time.PrevEpoch(beaconState) - beaconState.FinalizedCheckpointEpoch()
 	assert.Equal(t, w, d, "Did not get wanted finality delay")
 }
 
@@ -137,7 +188,7 @@ func TestIsInInactivityLeak(t *testing.T) {
 	finalizedEpoch := types.Epoch(0)
 	// Set values for each test case
 	setVal := func() {
-		prevEpoch = PrevEpoch(beaconState)
+		prevEpoch = time.PrevEpoch(beaconState)
 		finalizedEpoch = beaconState.FinalizedCheckpointEpoch()
 	}
 	setVal()
@@ -186,5 +237,25 @@ func buildState(slot types.Slot, validatorCount uint64) *ethpb.BeaconState {
 		FinalizedCheckpoint:         &ethpb.Checkpoint{Root: make([]byte, 32)},
 		PreviousJustifiedCheckpoint: &ethpb.Checkpoint{Root: make([]byte, 32)},
 		CurrentJustifiedCheckpoint:  &ethpb.Checkpoint{Root: make([]byte, 32)},
+	}
+}
+
+func TestIncreaseBadBalance_NotOK(t *testing.T) {
+	tests := []struct {
+		i  types.ValidatorIndex
+		b  []uint64
+		nb uint64
+	}{
+		{i: 0, b: []uint64{math.MaxUint64, math.MaxUint64, math.MaxUint64}, nb: 1},
+		{i: 2, b: []uint64{math.MaxUint64, math.MaxUint64, math.MaxUint64}, nb: 33 * 1e9},
+	}
+	for _, test := range tests {
+		state, err := v1.InitializeFromProto(&ethpb.BeaconState{
+			Validators: []*ethpb.Validator{
+				{EffectiveBalance: 4}, {EffectiveBalance: 4}, {EffectiveBalance: 4}},
+			Balances: test.b,
+		})
+		require.NoError(t, err)
+		require.ErrorContains(t, "addition overflows", IncreaseBalance(state, test.i, test.nb))
 	}
 }

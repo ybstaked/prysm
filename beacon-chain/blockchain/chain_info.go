@@ -8,11 +8,10 @@ import (
 	"github.com/prysmaticlabs/prysm/beacon-chain/core/helpers"
 	"github.com/prysmaticlabs/prysm/beacon-chain/forkchoice/protoarray"
 	"github.com/prysmaticlabs/prysm/beacon-chain/state"
+	"github.com/prysmaticlabs/prysm/config/params"
+	"github.com/prysmaticlabs/prysm/encoding/bytesutil"
 	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
 	"github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1/block"
-	"github.com/prysmaticlabs/prysm/shared/bytesutil"
-	"github.com/prysmaticlabs/prysm/shared/copyutil"
-	"github.com/prysmaticlabs/prysm/shared/params"
 	"go.opencensus.io/trace"
 )
 
@@ -24,6 +23,8 @@ type ChainInfoFetcher interface {
 	GenesisFetcher
 	CanonicalFetcher
 	ForkFetcher
+	TimeFetcher
+	HeadDomainFetcher
 }
 
 // TimeFetcher retrieves the Ethereum consensus data that's related to time.
@@ -48,8 +49,12 @@ type HeadFetcher interface {
 	HeadSeed(ctx context.Context, epoch types.Epoch) ([32]byte, error)
 	HeadGenesisValidatorRoot() [32]byte
 	HeadETH1Data() *ethpb.Eth1Data
+	HeadPublicKeyToValidatorIndex(ctx context.Context, pubKey [48]byte) (types.ValidatorIndex, bool)
+	HeadValidatorIndexToPublicKey(ctx context.Context, index types.ValidatorIndex) ([48]byte, error)
 	ProtoArrayStore() *protoarray.Store
 	ChainHeads() ([][32]byte, []types.Slot)
+	HeadSyncCommitteeFetcher
+	HeadDomainFetcher
 }
 
 // ForkFetcher retrieves the current fork information of the Ethereum beacon chain.
@@ -77,7 +82,7 @@ func (s *Service) FinalizedCheckpt() *ethpb.Checkpoint {
 		return &ethpb.Checkpoint{Root: params.BeaconConfig().ZeroHash[:]}
 	}
 
-	return copyutil.CopyCheckpoint(s.finalizedCheckpt)
+	return ethpb.CopyCheckpoint(s.finalizedCheckpt)
 }
 
 // CurrentJustifiedCheckpt returns the current justified checkpoint from head state.
@@ -86,7 +91,7 @@ func (s *Service) CurrentJustifiedCheckpt() *ethpb.Checkpoint {
 		return &ethpb.Checkpoint{Root: params.BeaconConfig().ZeroHash[:]}
 	}
 
-	return copyutil.CopyCheckpoint(s.justifiedCheckpt)
+	return ethpb.CopyCheckpoint(s.justifiedCheckpt)
 }
 
 // PreviousJustifiedCheckpt returns the previous justified checkpoint from head state.
@@ -95,7 +100,7 @@ func (s *Service) PreviousJustifiedCheckpt() *ethpb.Checkpoint {
 		return &ethpb.Checkpoint{Root: params.BeaconConfig().ZeroHash[:]}
 	}
 
-	return copyutil.CopyCheckpoint(s.prevJustifiedCheckpt)
+	return ethpb.CopyCheckpoint(s.prevJustifiedCheckpt)
 }
 
 // HeadSlot returns the slot of the head of the chain.
@@ -177,7 +182,7 @@ func (s *Service) HeadValidatorsIndices(ctx context.Context, epoch types.Epoch) 
 	if !s.hasHeadState() {
 		return []types.ValidatorIndex{}, nil
 	}
-	return helpers.ActiveValidatorIndices(s.headState(ctx), epoch)
+	return helpers.ActiveValidatorIndices(ctx, s.headState(ctx), epoch)
 }
 
 // HeadSeed returns the seed from the head view of a given epoch.
@@ -288,16 +293,20 @@ func (s *Service) ChainHeads() ([][32]byte, []types.Slot) {
 func (s *Service) HeadPublicKeyToValidatorIndex(ctx context.Context, pubKey [48]byte) (types.ValidatorIndex, bool) {
 	s.headLock.RLock()
 	defer s.headLock.RUnlock()
-
+	if !s.hasHeadState() {
+		return 0, false
+	}
 	return s.headState(ctx).ValidatorIndexByPubkey(pubKey)
 }
 
 // HeadValidatorIndexToPublicKey returns the pubkey of the validator `index`  in current head state.
-func (s *Service) HeadValidatorIndexToPublicKey(ctx context.Context, index types.ValidatorIndex) ([48]byte, error) {
+func (s *Service) HeadValidatorIndexToPublicKey(_ context.Context, index types.ValidatorIndex) ([48]byte, error) {
 	s.headLock.RLock()
 	defer s.headLock.RUnlock()
-
-	v, err := s.headState(ctx).ValidatorAtIndexReadOnly(index)
+	if !s.hasHeadState() {
+		return [48]byte{}, nil
+	}
+	v, err := s.headValidatorAtIndex(index)
 	if err != nil {
 		return [48]byte{}, err
 	}

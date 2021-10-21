@@ -7,11 +7,12 @@ import (
 	"github.com/pkg/errors"
 	types "github.com/prysmaticlabs/eth2-types"
 	"github.com/prysmaticlabs/prysm/beacon-chain/core/helpers"
+	"github.com/prysmaticlabs/prysm/beacon-chain/core/time"
 	"github.com/prysmaticlabs/prysm/beacon-chain/state"
+	"github.com/prysmaticlabs/prysm/config/params"
+	"github.com/prysmaticlabs/prysm/monitoring/tracing"
 	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	"github.com/prysmaticlabs/prysm/shared/attestationutil"
-	"github.com/prysmaticlabs/prysm/shared/params"
-	"github.com/prysmaticlabs/prysm/shared/traceutil"
+	"github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1/attestation"
 	"go.opencensus.io/trace"
 )
 
@@ -43,20 +44,20 @@ func ProcessAttestations(
 		}
 		v.IsCurrentEpochAttester, v.IsCurrentEpochTargetAttester, err = AttestedCurrentEpoch(state, a)
 		if err != nil {
-			traceutil.AnnotateError(span, err)
+			tracing.AnnotateError(span, err)
 			return nil, nil, errors.Wrap(err, "could not check validator attested current epoch")
 		}
 		v.IsPrevEpochAttester, v.IsPrevEpochTargetAttester, v.IsPrevEpochHeadAttester, err = AttestedPrevEpoch(state, a)
 		if err != nil {
-			traceutil.AnnotateError(span, err)
+			tracing.AnnotateError(span, err)
 			return nil, nil, errors.Wrap(err, "could not check validator attested previous epoch")
 		}
 
-		committee, err := helpers.BeaconCommitteeFromState(state, a.Data.Slot, a.Data.CommitteeIndex)
+		committee, err := helpers.BeaconCommitteeFromState(ctx, state, a.Data.Slot, a.Data.CommitteeIndex)
 		if err != nil {
 			return nil, nil, err
 		}
-		indices, err := attestationutil.AttestingIndices(a.AggregationBits, committee)
+		indices, err := attestation.AttestingIndices(a.AggregationBits, committee)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -70,7 +71,7 @@ func ProcessAttestations(
 
 // AttestedCurrentEpoch returns true if attestation `a` attested once in current epoch and/or epoch boundary block.
 func AttestedCurrentEpoch(s state.ReadOnlyBeaconState, a *ethpb.PendingAttestation) (bool, bool, error) {
-	currentEpoch := helpers.CurrentEpoch(s)
+	currentEpoch := time.CurrentEpoch(s)
 	var votedCurrentEpoch, votedTarget bool
 	// Did validator vote current epoch.
 	if a.Data.Target.Epoch == currentEpoch {
@@ -88,7 +89,7 @@ func AttestedCurrentEpoch(s state.ReadOnlyBeaconState, a *ethpb.PendingAttestati
 
 // AttestedPrevEpoch returns true if attestation `a` attested once in previous epoch and epoch boundary block and/or the same head.
 func AttestedPrevEpoch(s state.ReadOnlyBeaconState, a *ethpb.PendingAttestation) (bool, bool, bool, error) {
-	prevEpoch := helpers.PrevEpoch(s)
+	prevEpoch := time.PrevEpoch(s)
 	var votedPrevEpoch, votedTarget, votedHead bool
 	// Did validator vote previous epoch.
 	if a.Data.Target.Epoch == prevEpoch {

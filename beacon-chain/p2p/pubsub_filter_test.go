@@ -13,10 +13,10 @@ import (
 	"github.com/prysmaticlabs/prysm/beacon-chain/core/feed"
 	statefeed "github.com/prysmaticlabs/prysm/beacon-chain/core/feed/state"
 	"github.com/prysmaticlabs/prysm/beacon-chain/p2p/encoder"
-	"github.com/prysmaticlabs/prysm/shared/bytesutil"
-	"github.com/prysmaticlabs/prysm/shared/p2putils"
-	"github.com/prysmaticlabs/prysm/shared/testutil/assert"
-	"github.com/prysmaticlabs/prysm/shared/timeutils"
+	"github.com/prysmaticlabs/prysm/encoding/bytesutil"
+	"github.com/prysmaticlabs/prysm/network/forks"
+	"github.com/prysmaticlabs/prysm/testing/assert"
+	prysmTime "github.com/prysmaticlabs/prysm/time"
 	"github.com/stretchr/testify/require"
 )
 
@@ -25,7 +25,7 @@ func TestService_CanSubscribe(t *testing.T) {
 	validProtocolSuffix := "/" + encoder.ProtocolSuffixSSZSnappy
 	genesisTime := time.Now()
 	valRoot := [32]byte{}
-	digest, err := p2putils.CreateForkDigest(genesisTime, valRoot[:])
+	digest, err := forks.CreateForkDigest(genesisTime, valRoot[:])
 	assert.NoError(t, err)
 	type test struct {
 		name  string
@@ -86,11 +86,11 @@ func TestService_CanSubscribe(t *testing.T) {
 	}
 
 	// Ensure all gossip topic mappings pass validation.
-	for topic := range GossipTopicMappings {
+	for _, topic := range AllTopics() {
 		formatting := []interface{}{digest}
 
 		// Special case for attestation subnets which have a second formatting placeholder.
-		if topic == AttestationSubnetTopicFormat {
+		if topic == AttestationSubnetTopicFormat || topic == SyncCommitteeSubnetTopicFormat {
 			formatting = append(formatting, 0 /* some subnet ID */)
 		}
 
@@ -193,7 +193,7 @@ func Test_scanfcheck(t *testing.T) {
 func TestGossipTopicMapping_scanfcheck_GossipTopicFormattingSanityCheck(t *testing.T) {
 	// scanfcheck only supports integer based substitutions at the moment. Any others will
 	// inaccurately fail validation.
-	for topic := range GossipTopicMappings {
+	for _, topic := range AllTopics() {
 		t.Run(topic, func(t *testing.T) {
 			for i, c := range topic {
 				if string(c) == "%" {
@@ -211,7 +211,7 @@ func TestService_FilterIncomingSubscriptions(t *testing.T) {
 	validProtocolSuffix := "/" + encoder.ProtocolSuffixSSZSnappy
 	genesisTime := time.Now()
 	valRoot := [32]byte{}
-	digest, err := p2putils.CreateForkDigest(genesisTime, valRoot[:])
+	digest, err := forks.CreateForkDigest(genesisTime, valRoot[:])
 	assert.NoError(t, err)
 	type args struct {
 		id   peer.ID
@@ -347,7 +347,7 @@ func TestService_MonitorsStateForkUpdates(t *testing.T) {
 		n = notifier.StateFeed().Send(&feed.Event{
 			Type: statefeed.Initialized,
 			Data: &statefeed.InitializedData{
-				StartTime:             timeutils.Now(),
+				StartTime:             prysmTime.Now(),
 				GenesisValidatorsRoot: bytesutil.PadTo([]byte("genesis"), 32),
 			},
 		})
@@ -356,5 +356,4 @@ func TestService_MonitorsStateForkUpdates(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	require.True(t, s.isInitialized())
-	require.NotEmpty(t, s.currentForkDigest)
 }

@@ -11,12 +11,12 @@ import (
 	ssz "github.com/ferranbt/fastssz"
 	types "github.com/prysmaticlabs/eth2-types"
 	slashertypes "github.com/prysmaticlabs/prysm/beacon-chain/slasher/types"
+	"github.com/prysmaticlabs/prysm/config/params"
+	"github.com/prysmaticlabs/prysm/encoding/bytesutil"
 	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
 	slashpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	"github.com/prysmaticlabs/prysm/shared/bytesutil"
-	"github.com/prysmaticlabs/prysm/shared/params"
-	"github.com/prysmaticlabs/prysm/shared/testutil/assert"
-	"github.com/prysmaticlabs/prysm/shared/testutil/require"
+	"github.com/prysmaticlabs/prysm/testing/assert"
+	"github.com/prysmaticlabs/prysm/testing/require"
 )
 
 func TestStore_AttestationRecordForValidator_SaveRetrieve(t *testing.T) {
@@ -181,6 +181,21 @@ func TestStore_SlasherChunk_SaveRetrieve(t *testing.T) {
 		require.Equal(t, true, exists)
 		require.DeepEqual(t, chunks[i], retrievedChunks[i])
 	}
+}
+
+func TestStore_SlasherChunk_PreventsSavingWrongLength(t *testing.T) {
+	ctx := context.Background()
+	beaconDB := setupDB(t)
+	totalChunks := 64
+	chunkKeys := make([][]byte, totalChunks)
+	chunks := make([][]uint16, totalChunks)
+	for i := 0; i < totalChunks; i++ {
+		chunks[i] = []uint16{}
+		chunkKeys[i] = ssz.MarshalUint64(make([]byte, 0), uint64(i))
+	}
+	// We should get an error if saving empty chunks.
+	err := beaconDB.SaveSlasherChunks(ctx, slashertypes.MinSpan, chunkKeys, chunks)
+	require.ErrorContains(t, "cannot encode empty chunk", err)
 }
 
 func TestStore_ExistingBlockProposals(t *testing.T) {

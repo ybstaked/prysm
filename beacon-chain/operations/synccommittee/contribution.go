@@ -5,9 +5,8 @@ import (
 
 	"github.com/pkg/errors"
 	types "github.com/prysmaticlabs/eth2-types"
+	"github.com/prysmaticlabs/prysm/container/queue"
 	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	"github.com/prysmaticlabs/prysm/shared/copyutil"
-	"github.com/prysmaticlabs/prysm/shared/queue"
 )
 
 // To give two slots tolerance for objects that arrive earlier.
@@ -29,7 +28,7 @@ func (s *Store) SaveSyncCommitteeContribution(cont *ethpb.SyncCommitteeContribut
 		return err
 	}
 
-	copied := copyutil.CopySyncCommitteeContribution(cont)
+	copied := ethpb.CopySyncCommitteeContribution(cont)
 
 	// Contributions exist in the queue. Append instead of insert new.
 	if item != nil {
@@ -75,7 +74,7 @@ func (s *Store) SyncCommitteeContributions(slot types.Slot) ([]*ethpb.SyncCommit
 
 	item := s.contributionCache.RetrieveByKey(syncCommitteeKey(slot))
 	if item == nil {
-		return nil, nil
+		return []*ethpb.SyncCommitteeContribution{}, nil
 	}
 
 	contributions, ok := item.Value.([]*ethpb.SyncCommitteeContribution)

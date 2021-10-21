@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/golang-jwt/jwt"
-	"github.com/prysmaticlabs/prysm/shared/testutil/require"
-	"github.com/prysmaticlabs/prysm/shared/timeutils"
+	"github.com/prysmaticlabs/prysm/testing/require"
+	"github.com/prysmaticlabs/prysm/time"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
@@ -23,7 +23,7 @@ func TestServer_JWTInterceptor_Verify(t *testing.T) {
 	unaryHandler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return nil, nil
 	}
-	token, _, err := s.createTokenString()
+	token, _, err := createTokenString(s.jwtKey)
 	require.NoError(t, err)
 	ctxMD := map[string][]string{
 		"authorization": {"Bearer " + token},
@@ -50,7 +50,7 @@ func TestServer_JWTInterceptor_BadToken(t *testing.T) {
 	badServer := Server{
 		jwtKey: []byte("badTestKey"),
 	}
-	token, _, err := badServer.createTokenString()
+	token, _, err := createTokenString(badServer.jwtKey)
 	require.NoError(t, err)
 	ctxMD := map[string][]string{
 		"authorization": {"Bearer " + token},
@@ -63,7 +63,7 @@ func TestServer_JWTInterceptor_BadToken(t *testing.T) {
 
 func TestServer_JWTInterceptor_InvalidSigningType(t *testing.T) {
 	ss := &Server{jwtKey: make([]byte, 32)}
-	expirationTime := timeutils.Now().Add(tokenExpiryLength)
+	expirationTime := time.Now().Add(tokenExpiryLength)
 	// Use a different signing type than the expected, HMAC.
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.StandardClaims{
 		ExpiresAt: expirationTime.Unix(),

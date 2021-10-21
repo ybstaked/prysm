@@ -674,7 +674,7 @@ func local_request_BeaconChain_GetBlockHeader_0(ctx context.Context, marshaler r
 }
 
 func request_BeaconChain_SubmitBlock_0(ctx context.Context, marshaler runtime.Marshaler, client BeaconChainClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1.BeaconBlockContainer
+	var protoReq eth.SignedBeaconBlockContainerV2
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -691,7 +691,7 @@ func request_BeaconChain_SubmitBlock_0(ctx context.Context, marshaler runtime.Ma
 }
 
 func local_request_BeaconChain_SubmitBlock_0(ctx context.Context, marshaler runtime.Marshaler, server BeaconChainServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1.BeaconBlockContainer
+	var protoReq eth.SignedBeaconBlockContainerV2
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -1257,8 +1257,8 @@ func local_request_BeaconChain_SubmitVoluntaryExit_0(ctx context.Context, marsha
 
 }
 
-func request_BeaconChain_SubmitSyncCommitteeSignature_0(ctx context.Context, marshaler runtime.Marshaler, client BeaconChainClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq eth.SyncCommitteeMessage
+func request_BeaconChain_SubmitPoolSyncCommitteeSignatures_0(ctx context.Context, marshaler runtime.Marshaler, client BeaconChainClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq eth.SubmitPoolSyncCommitteeSignatures
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -1269,13 +1269,13 @@ func request_BeaconChain_SubmitSyncCommitteeSignature_0(ctx context.Context, mar
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.SubmitSyncCommitteeSignature(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.SubmitPoolSyncCommitteeSignatures(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_BeaconChain_SubmitSyncCommitteeSignature_0(ctx context.Context, marshaler runtime.Marshaler, server BeaconChainServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq eth.SyncCommitteeMessage
+func local_request_BeaconChain_SubmitPoolSyncCommitteeSignatures_0(ctx context.Context, marshaler runtime.Marshaler, server BeaconChainServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq eth.SubmitPoolSyncCommitteeSignatures
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -1286,7 +1286,7 @@ func local_request_BeaconChain_SubmitSyncCommitteeSignature_0(ctx context.Contex
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.SubmitSyncCommitteeSignature(ctx, &protoReq)
+	msg, err := server.SubmitPoolSyncCommitteeSignatures(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -1949,18 +1949,18 @@ func RegisterBeaconChainHandlerServer(ctx context.Context, mux *runtime.ServeMux
 
 	})
 
-	mux.Handle("POST", pattern_BeaconChain_SubmitSyncCommitteeSignature_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_BeaconChain_SubmitPoolSyncCommitteeSignatures_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/ethereum.eth.service.BeaconChain/SubmitSyncCommitteeSignature")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/ethereum.eth.service.BeaconChain/SubmitPoolSyncCommitteeSignatures")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_BeaconChain_SubmitSyncCommitteeSignature_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_BeaconChain_SubmitPoolSyncCommitteeSignatures_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -1968,7 +1968,7 @@ func RegisterBeaconChainHandlerServer(ctx context.Context, mux *runtime.ServeMux
 			return
 		}
 
-		forward_BeaconChain_SubmitSyncCommitteeSignature_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_BeaconChain_SubmitPoolSyncCommitteeSignatures_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -2602,23 +2602,23 @@ func RegisterBeaconChainHandlerClient(ctx context.Context, mux *runtime.ServeMux
 
 	})
 
-	mux.Handle("POST", pattern_BeaconChain_SubmitSyncCommitteeSignature_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_BeaconChain_SubmitPoolSyncCommitteeSignatures_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/ethereum.eth.service.BeaconChain/SubmitSyncCommitteeSignature")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/ethereum.eth.service.BeaconChain/SubmitPoolSyncCommitteeSignatures")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_BeaconChain_SubmitSyncCommitteeSignature_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_BeaconChain_SubmitPoolSyncCommitteeSignatures_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_BeaconChain_SubmitSyncCommitteeSignature_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_BeaconChain_SubmitPoolSyncCommitteeSignatures_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -2686,65 +2686,65 @@ func RegisterBeaconChainHandlerClient(ctx context.Context, mux *runtime.ServeMux
 }
 
 var (
-	pattern_BeaconChain_GetGenesis_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"eth", "v1", "beacon", "genesis"}, ""))
+	pattern_BeaconChain_GetGenesis_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"internal", "eth", "v1", "beacon", "genesis"}, ""))
 
-	pattern_BeaconChain_GetStateRoot_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"eth", "v1", "beacon", "states", "state_id", "root"}, ""))
+	pattern_BeaconChain_GetStateRoot_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6}, []string{"internal", "eth", "v1", "beacon", "states", "state_id", "root"}, ""))
 
-	pattern_BeaconChain_GetStateFork_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"eth", "v1", "beacon", "states", "state_id", "fork"}, ""))
+	pattern_BeaconChain_GetStateFork_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6}, []string{"internal", "eth", "v1", "beacon", "states", "state_id", "fork"}, ""))
 
-	pattern_BeaconChain_GetFinalityCheckpoints_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"eth", "v1", "beacon", "states", "state_id", "finality_checkpoints"}, ""))
+	pattern_BeaconChain_GetFinalityCheckpoints_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6}, []string{"internal", "eth", "v1", "beacon", "states", "state_id", "finality_checkpoints"}, ""))
 
-	pattern_BeaconChain_ListValidators_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"eth", "v1", "beacon", "states", "state_id", "validators"}, ""))
+	pattern_BeaconChain_ListValidators_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6}, []string{"internal", "eth", "v1", "beacon", "states", "state_id", "validators"}, ""))
 
-	pattern_BeaconChain_GetValidator_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5, 1, 0, 4, 1, 5, 6}, []string{"eth", "v1", "beacon", "states", "state_id", "validators", "validator_id"}, ""))
+	pattern_BeaconChain_GetValidator_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6, 1, 0, 4, 1, 5, 7}, []string{"internal", "eth", "v1", "beacon", "states", "state_id", "validators", "validator_id"}, ""))
 
-	pattern_BeaconChain_ListValidatorBalances_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"eth", "v1", "beacon", "states", "state_id", "validator_balances"}, ""))
+	pattern_BeaconChain_ListValidatorBalances_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6}, []string{"internal", "eth", "v1", "beacon", "states", "state_id", "validator_balances"}, ""))
 
-	pattern_BeaconChain_ListCommittees_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"eth", "v1", "beacon", "states", "state_id", "committees"}, ""))
+	pattern_BeaconChain_ListCommittees_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6}, []string{"internal", "eth", "v1", "beacon", "states", "state_id", "committees"}, ""))
 
-	pattern_BeaconChain_ListSyncCommittees_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"eth", "v1", "beacon", "states", "state_id", "sync_committees"}, ""))
+	pattern_BeaconChain_ListSyncCommittees_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6}, []string{"internal", "eth", "v1", "beacon", "states", "state_id", "sync_committees"}, ""))
 
-	pattern_BeaconChain_ListBlockHeaders_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"eth", "v1", "beacon", "headers"}, ""))
+	pattern_BeaconChain_ListBlockHeaders_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"internal", "eth", "v1", "beacon", "headers"}, ""))
 
-	pattern_BeaconChain_GetBlockHeader_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"eth", "v1", "beacon", "headers", "block_id"}, ""))
+	pattern_BeaconChain_GetBlockHeader_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5}, []string{"internal", "eth", "v1", "beacon", "headers", "block_id"}, ""))
 
-	pattern_BeaconChain_SubmitBlock_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"eth", "v1", "beacon", "blocks"}, ""))
+	pattern_BeaconChain_SubmitBlock_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"internal", "eth", "v1", "beacon", "blocks"}, ""))
 
-	pattern_BeaconChain_GetBlockRoot_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"eth", "v1", "beacon", "blocks", "block_id", "root"}, ""))
+	pattern_BeaconChain_GetBlockRoot_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6}, []string{"internal", "eth", "v1", "beacon", "blocks", "block_id", "root"}, ""))
 
-	pattern_BeaconChain_GetBlock_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"eth", "v1", "beacon", "blocks", "block_id"}, ""))
+	pattern_BeaconChain_GetBlock_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5}, []string{"internal", "eth", "v1", "beacon", "blocks", "block_id"}, ""))
 
-	pattern_BeaconChain_GetBlockSSZ_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"eth", "v1", "beacon", "blocks", "block_id", "ssz"}, ""))
+	pattern_BeaconChain_GetBlockSSZ_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6}, []string{"internal", "eth", "v1", "beacon", "blocks", "block_id", "ssz"}, ""))
 
-	pattern_BeaconChain_GetBlockV2_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"eth", "v2", "beacon", "blocks", "block_id"}, ""))
+	pattern_BeaconChain_GetBlockV2_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5}, []string{"internal", "eth", "v2", "beacon", "blocks", "block_id"}, ""))
 
-	pattern_BeaconChain_GetBlockSSZV2_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"eth", "v2", "beacon", "blocks", "block_id", "ssz"}, ""))
+	pattern_BeaconChain_GetBlockSSZV2_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6}, []string{"internal", "eth", "v2", "beacon", "blocks", "block_id", "ssz"}, ""))
 
-	pattern_BeaconChain_ListBlockAttestations_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"eth", "v1", "beacon", "blocks", "block_id", "attestations"}, ""))
+	pattern_BeaconChain_ListBlockAttestations_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6}, []string{"internal", "eth", "v1", "beacon", "blocks", "block_id", "attestations"}, ""))
 
-	pattern_BeaconChain_ListPoolAttestations_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"eth", "v1", "beacon", "pool", "attestations"}, ""))
+	pattern_BeaconChain_ListPoolAttestations_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5}, []string{"internal", "eth", "v1", "beacon", "pool", "attestations"}, ""))
 
-	pattern_BeaconChain_SubmitAttestations_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"eth", "v1", "beacon", "pool", "attestations"}, ""))
+	pattern_BeaconChain_SubmitAttestations_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5}, []string{"internal", "eth", "v1", "beacon", "pool", "attestations"}, ""))
 
-	pattern_BeaconChain_ListPoolAttesterSlashings_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"eth", "v1", "beacon", "pool", "attester_slashings"}, ""))
+	pattern_BeaconChain_ListPoolAttesterSlashings_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5}, []string{"internal", "eth", "v1", "beacon", "pool", "attester_slashings"}, ""))
 
-	pattern_BeaconChain_SubmitAttesterSlashing_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"eth", "v1", "beacon", "pool", "attester_slashings"}, ""))
+	pattern_BeaconChain_SubmitAttesterSlashing_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5}, []string{"internal", "eth", "v1", "beacon", "pool", "attester_slashings"}, ""))
 
-	pattern_BeaconChain_ListPoolProposerSlashings_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"eth", "v1", "beacon", "pool", "proposer_slashings"}, ""))
+	pattern_BeaconChain_ListPoolProposerSlashings_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5}, []string{"internal", "eth", "v1", "beacon", "pool", "proposer_slashings"}, ""))
 
-	pattern_BeaconChain_SubmitProposerSlashing_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"eth", "v1", "beacon", "pool", "proposer_slashings"}, ""))
+	pattern_BeaconChain_SubmitProposerSlashing_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5}, []string{"internal", "eth", "v1", "beacon", "pool", "proposer_slashings"}, ""))
 
-	pattern_BeaconChain_ListPoolVoluntaryExits_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"eth", "v1", "beacon", "pool", "voluntary_exits"}, ""))
+	pattern_BeaconChain_ListPoolVoluntaryExits_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5}, []string{"internal", "eth", "v1", "beacon", "pool", "voluntary_exits"}, ""))
 
-	pattern_BeaconChain_SubmitVoluntaryExit_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"eth", "v1", "beacon", "pool", "voluntary_exits"}, ""))
+	pattern_BeaconChain_SubmitVoluntaryExit_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5}, []string{"internal", "eth", "v1", "beacon", "pool", "voluntary_exits"}, ""))
 
-	pattern_BeaconChain_SubmitSyncCommitteeSignature_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"eth", "v1", "beacon", "pool", "sync_committees"}, ""))
+	pattern_BeaconChain_SubmitPoolSyncCommitteeSignatures_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5}, []string{"internal", "eth", "v1", "beacon", "pool", "sync_committees"}, ""))
 
-	pattern_BeaconChain_GetForkSchedule_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"eth", "v1", "config", "fork_schedule"}, ""))
+	pattern_BeaconChain_GetForkSchedule_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"internal", "eth", "v1", "config", "fork_schedule"}, ""))
 
-	pattern_BeaconChain_GetSpec_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"eth", "v1", "config", "spec"}, ""))
+	pattern_BeaconChain_GetSpec_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"internal", "eth", "v1", "config", "spec"}, ""))
 
-	pattern_BeaconChain_GetDepositContract_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"eth", "v1", "config", "deposit_contract"}, ""))
+	pattern_BeaconChain_GetDepositContract_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"internal", "eth", "v1", "config", "deposit_contract"}, ""))
 )
 
 var (
@@ -2800,7 +2800,7 @@ var (
 
 	forward_BeaconChain_SubmitVoluntaryExit_0 = runtime.ForwardResponseMessage
 
-	forward_BeaconChain_SubmitSyncCommitteeSignature_0 = runtime.ForwardResponseMessage
+	forward_BeaconChain_SubmitPoolSyncCommitteeSignatures_0 = runtime.ForwardResponseMessage
 
 	forward_BeaconChain_GetForkSchedule_0 = runtime.ForwardResponseMessage
 

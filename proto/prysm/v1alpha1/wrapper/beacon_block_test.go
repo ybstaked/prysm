@@ -5,13 +5,14 @@ import (
 	"testing"
 
 	types "github.com/prysmaticlabs/eth2-types"
+	"github.com/prysmaticlabs/prysm/encoding/bytesutil"
 	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
 	v1alpha1 "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
 	"github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1/wrapper"
-	"github.com/prysmaticlabs/prysm/shared/testutil"
-	"github.com/prysmaticlabs/prysm/shared/testutil/assert"
-	"github.com/prysmaticlabs/prysm/shared/testutil/require"
-	"github.com/prysmaticlabs/prysm/shared/version"
+	"github.com/prysmaticlabs/prysm/runtime/version"
+	"github.com/prysmaticlabs/prysm/testing/assert"
+	"github.com/prysmaticlabs/prysm/testing/require"
+	"github.com/prysmaticlabs/prysm/testing/util"
 )
 
 func TestAltairSignedBeaconBlock_Signature(t *testing.T) {
@@ -80,7 +81,7 @@ func TestAltairSignedBeaconBlock_PbAltairBlock(t *testing.T) {
 }
 
 func TestAltairSignedBeaconBlock_MarshalSSZTo(t *testing.T) {
-	wsb, err := wrapper.WrappedAltairSignedBeaconBlock(testutil.HydrateSignedBeaconBlockAltair(&ethpb.SignedBeaconBlockAltair{}))
+	wsb, err := wrapper.WrappedAltairSignedBeaconBlock(util.HydrateSignedBeaconBlockAltair(&ethpb.SignedBeaconBlockAltair{}))
 	assert.NoError(t, err)
 
 	var b []byte
@@ -90,7 +91,7 @@ func TestAltairSignedBeaconBlock_MarshalSSZTo(t *testing.T) {
 }
 
 func TestAltairSignedBeaconBlock_SSZ(t *testing.T) {
-	wsb, err := wrapper.WrappedAltairSignedBeaconBlock(testutil.HydrateSignedBeaconBlockAltair(&ethpb.SignedBeaconBlockAltair{}))
+	wsb, err := wrapper.WrappedAltairSignedBeaconBlock(util.HydrateSignedBeaconBlockAltair(&ethpb.SignedBeaconBlockAltair{}))
 	assert.NoError(t, err)
 
 	b, err := wsb.MarshalSSZ()
@@ -160,7 +161,7 @@ func TestAltairBeaconBlock_IsNil(t *testing.T) {
 }
 
 func TestAltairBeaconBlock_HashTreeRoot(t *testing.T) {
-	wb, err := wrapper.WrappedAltairBeaconBlock(testutil.HydrateBeaconBlockAltair(&ethpb.BeaconBlockAltair{}))
+	wb, err := wrapper.WrappedAltairBeaconBlock(util.HydrateBeaconBlockAltair(&ethpb.BeaconBlockAltair{}))
 	require.NoError(t, err)
 
 	rt, err := wb.HashTreeRoot()
@@ -177,7 +178,7 @@ func TestAltairBeaconBlock_Proto(t *testing.T) {
 }
 
 func TestAltairBeaconBlock_SSZ(t *testing.T) {
-	wb, err := wrapper.WrappedAltairBeaconBlock(testutil.HydrateBeaconBlockAltair(&ethpb.BeaconBlockAltair{}))
+	wb, err := wrapper.WrappedAltairBeaconBlock(util.HydrateBeaconBlockAltair(&ethpb.BeaconBlockAltair{}))
 	assert.NoError(t, err)
 
 	b, err := wb.MarshalSSZ()
@@ -290,7 +291,7 @@ func TestAltairBeaconBlockBody_IsNil(t *testing.T) {
 }
 
 func TestAltairBeaconBlockBody_HashTreeRoot(t *testing.T) {
-	wb, err := wrapper.WrappedAltairBeaconBlockBody(testutil.HydrateBeaconBlockBodyAltair(&ethpb.BeaconBlockBodyAltair{}))
+	wb, err := wrapper.WrappedAltairBeaconBlockBody(util.HydrateBeaconBlockBodyAltair(&ethpb.BeaconBlockBodyAltair{}))
 	assert.NoError(t, err)
 
 	rt, err := wb.HashTreeRoot()
@@ -304,4 +305,63 @@ func TestAltairBeaconBlockBody_Proto(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, body, wbb.Proto())
+}
+
+func TestPhase0SignedBeaconBlock_Header(t *testing.T) {
+	root := bytesutil.PadTo([]byte("root"), 32)
+	signature := bytesutil.PadTo([]byte("sig"), 96)
+	body := &ethpb.BeaconBlockBody{}
+	body = util.HydrateBeaconBlockBody(body)
+	bodyRoot, err := body.HashTreeRoot()
+	require.NoError(t, err)
+	block := &ethpb.SignedBeaconBlock{
+		Block: &ethpb.BeaconBlock{
+			Slot:          1,
+			ProposerIndex: 1,
+			ParentRoot:    root,
+			StateRoot:     root,
+			Body:          body,
+		},
+		Signature: signature,
+	}
+	wrapped := wrapper.WrappedPhase0SignedBeaconBlock(block)
+
+	header, err := wrapped.Header()
+	require.NoError(t, err)
+	assert.Equal(t, types.ValidatorIndex(1), header.Header.ProposerIndex)
+	assert.Equal(t, types.Slot(1), header.Header.Slot)
+	assert.DeepEqual(t, bodyRoot[:], header.Header.BodyRoot)
+	assert.DeepEqual(t, root, header.Header.StateRoot)
+	assert.DeepEqual(t, root, header.Header.ParentRoot)
+	assert.DeepEqual(t, signature, header.Signature)
+}
+
+func TestAltairSignedBeaconBlock_Header(t *testing.T) {
+	root := bytesutil.PadTo([]byte("root"), 32)
+	signature := bytesutil.PadTo([]byte("sig"), 96)
+	body := &ethpb.BeaconBlockBodyAltair{}
+	body = util.HydrateBeaconBlockBodyAltair(body)
+	bodyRoot, err := body.HashTreeRoot()
+	require.NoError(t, err)
+	block := &ethpb.SignedBeaconBlockAltair{
+		Block: &ethpb.BeaconBlockAltair{
+			Slot:          1,
+			ProposerIndex: 1,
+			ParentRoot:    root,
+			StateRoot:     root,
+			Body:          body,
+		},
+		Signature: signature,
+	}
+	wrapped, err := wrapper.WrappedAltairSignedBeaconBlock(block)
+	require.NoError(t, err)
+
+	header, err := wrapped.Header()
+	require.NoError(t, err)
+	assert.Equal(t, types.ValidatorIndex(1), header.Header.ProposerIndex)
+	assert.Equal(t, types.Slot(1), header.Header.Slot)
+	assert.DeepEqual(t, bodyRoot[:], header.Header.BodyRoot)
+	assert.DeepEqual(t, root, header.Header.StateRoot)
+	assert.DeepEqual(t, root, header.Header.ParentRoot)
+	assert.DeepEqual(t, signature, header.Signature)
 }

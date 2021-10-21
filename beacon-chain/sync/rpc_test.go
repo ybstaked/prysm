@@ -8,18 +8,18 @@ import (
 
 	libp2pcore "github.com/libp2p/go-libp2p-core"
 	"github.com/libp2p/go-libp2p-core/network"
-	"github.com/prysmaticlabs/prysm/beacon-chain/core/state"
+	"github.com/prysmaticlabs/prysm/beacon-chain/core/transition"
 	prysmP2P "github.com/prysmaticlabs/prysm/beacon-chain/p2p"
 	"github.com/prysmaticlabs/prysm/beacon-chain/p2p/encoder"
 	p2ptest "github.com/prysmaticlabs/prysm/beacon-chain/p2p/testing"
 	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	"github.com/prysmaticlabs/prysm/shared/testutil"
-	"github.com/prysmaticlabs/prysm/shared/testutil/assert"
-	"github.com/prysmaticlabs/prysm/shared/testutil/require"
+	"github.com/prysmaticlabs/prysm/testing/assert"
+	"github.com/prysmaticlabs/prysm/testing/require"
+	"github.com/prysmaticlabs/prysm/testing/util"
 )
 
 func init() {
-	state.SkipSlotCache.Disable()
+	transition.SkipSlotCache.Disable()
 }
 
 // expectSuccess status code from a stream in regular sync.
@@ -76,7 +76,7 @@ func TestRegisterRPC_ReceivesValidMessage(t *testing.T) {
 
 	p2p.ReceiveRPC(topic, &ethpb.Fork{CurrentVersion: []byte("fooo"), PreviousVersion: []byte("barr")})
 
-	if testutil.WaitTimeout(&wg, time.Second) {
+	if util.WaitTimeout(&wg, time.Second) {
 		t.Fatal("Did not receive RPC in 1 second")
 	}
 }

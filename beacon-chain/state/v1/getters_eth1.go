@@ -3,10 +3,9 @@ package v1
 import (
 	"github.com/pkg/errors"
 	"github.com/prysmaticlabs/prysm/beacon-chain/state/stateutil"
+	"github.com/prysmaticlabs/prysm/config/features"
+	"github.com/prysmaticlabs/prysm/encoding/ssz"
 	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	"github.com/prysmaticlabs/prysm/shared/copyutil"
-	"github.com/prysmaticlabs/prysm/shared/featureconfig"
-	"github.com/prysmaticlabs/prysm/shared/htrutils"
 )
 
 // Eth1Data corresponding to the proof-of-work chain information stored in the beacon state.
@@ -34,7 +33,7 @@ func (b *BeaconState) eth1Data() *ethpb.Eth1Data {
 		return nil
 	}
 
-	return copyutil.CopyETH1Data(b.state.Eth1Data)
+	return ethpb.CopyETH1Data(b.state.Eth1Data)
 }
 
 // Eth1DataVotes corresponds to votes from Ethereum on the canonical proof-of-work chain
@@ -66,7 +65,7 @@ func (b *BeaconState) eth1DataVotes() []*ethpb.Eth1Data {
 
 	res := make([]*ethpb.Eth1Data, len(b.state.Eth1DataVotes))
 	for i := 0; i < len(res); i++ {
-		res[i] = copyutil.CopyETH1Data(b.state.Eth1DataVotes[i])
+		res[i] = ethpb.CopyETH1Data(b.state.Eth1DataVotes[i])
 	}
 	return res
 }
@@ -98,13 +97,13 @@ func (b *BeaconState) eth1DepositIndex() uint64 {
 // eth1Root computes the HashTreeRoot Merkleization of
 // a BeaconBlockHeader struct according to the Ethereum
 // Simple Serialize specification.
-func eth1Root(hasher htrutils.HashFn, eth1Data *ethpb.Eth1Data) ([32]byte, error) {
+func eth1Root(hasher ssz.HashFn, eth1Data *ethpb.Eth1Data) ([32]byte, error) {
 	if eth1Data == nil {
 		return [32]byte{}, errors.New("nil eth1 data")
 	}
 
 	enc := stateutil.Eth1DataEncKey(eth1Data)
-	if featureconfig.Get().EnableSSZCache {
+	if features.Get().EnableSSZCache {
 		if found, ok := cachedHasher.rootsCache.Get(string(enc)); ok && found != nil {
 			return found.([32]byte), nil
 		}
@@ -115,7 +114,7 @@ func eth1Root(hasher htrutils.HashFn, eth1Data *ethpb.Eth1Data) ([32]byte, error
 		return [32]byte{}, err
 	}
 
-	if featureconfig.Get().EnableSSZCache {
+	if features.Get().EnableSSZCache {
 		cachedHasher.rootsCache.Set(string(enc), root, 32)
 	}
 	return root, nil
@@ -130,7 +129,7 @@ func eth1DataVotesRoot(eth1DataVotes []*ethpb.Eth1Data) ([32]byte, error) {
 		return [32]byte{}, err
 	}
 
-	if featureconfig.Get().EnableSSZCache {
+	if features.Get().EnableSSZCache {
 		if found, ok := cachedHasher.rootsCache.Get(string(hashKey[:])); ok && found != nil {
 			return found.([32]byte), nil
 		}
@@ -139,7 +138,7 @@ func eth1DataVotesRoot(eth1DataVotes []*ethpb.Eth1Data) ([32]byte, error) {
 	if err != nil {
 		return [32]byte{}, err
 	}
-	if featureconfig.Get().EnableSSZCache {
+	if features.Get().EnableSSZCache {
 		cachedHasher.rootsCache.Set(string(hashKey[:]), root, 32)
 	}
 	return root, nil

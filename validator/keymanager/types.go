@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/prysmaticlabs/prysm/async/event"
+	"github.com/prysmaticlabs/prysm/crypto/bls"
 	validatorpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1/validator-client"
-	"github.com/prysmaticlabs/prysm/shared/bls"
-	"github.com/prysmaticlabs/prysm/shared/event"
 )
 
 // IKeymanager defines a general keymanager interface for Prysm wallets.
@@ -40,6 +40,10 @@ const (
 	// Remote keymanager capable of remote-signing data.
 	Remote
 )
+
+// IncorrectPasswordErrMsg defines a common error string representing an EIP-2335
+// keystore password was incorrect.
+const IncorrectPasswordErrMsg = "invalid checksum"
 
 // String marshals a keymanager kind to a string value.
 func (k Kind) String() string {

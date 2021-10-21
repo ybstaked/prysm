@@ -12,7 +12,6 @@ import (
 	"github.com/libp2p/go-libp2p-core/protocol"
 	types "github.com/prysmaticlabs/eth2-types"
 	chainMock "github.com/prysmaticlabs/prysm/beacon-chain/blockchain/testing"
-	"github.com/prysmaticlabs/prysm/beacon-chain/core/helpers"
 	db2 "github.com/prysmaticlabs/prysm/beacon-chain/db"
 	db "github.com/prysmaticlabs/prysm/beacon-chain/db/testing"
 	"github.com/prysmaticlabs/prysm/beacon-chain/p2p"
@@ -20,15 +19,15 @@ import (
 	p2ptest "github.com/prysmaticlabs/prysm/beacon-chain/p2p/testing"
 	p2ptypes "github.com/prysmaticlabs/prysm/beacon-chain/p2p/types"
 	"github.com/prysmaticlabs/prysm/cmd/beacon-chain/flags"
+	"github.com/prysmaticlabs/prysm/config/params"
+	"github.com/prysmaticlabs/prysm/encoding/bytesutil"
 	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
 	pb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	statepb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
 	"github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1/wrapper"
-	"github.com/prysmaticlabs/prysm/shared/bytesutil"
-	"github.com/prysmaticlabs/prysm/shared/params"
-	"github.com/prysmaticlabs/prysm/shared/testutil"
-	"github.com/prysmaticlabs/prysm/shared/testutil/assert"
-	"github.com/prysmaticlabs/prysm/shared/testutil/require"
+	"github.com/prysmaticlabs/prysm/testing/assert"
+	"github.com/prysmaticlabs/prysm/testing/require"
+	"github.com/prysmaticlabs/prysm/testing/util"
+	"github.com/prysmaticlabs/prysm/time/slots"
 	logTest "github.com/sirupsen/logrus/hooks/test"
 )
 
@@ -47,7 +46,7 @@ func TestRPCBeaconBlocksByRange_RPCHandlerReturnsBlocks(t *testing.T) {
 
 	// Populate the database with blocks that would match the request.
 	for i := req.StartSlot; i < req.StartSlot.Add(req.Step*req.Count); i += types.Slot(req.Step) {
-		blk := testutil.NewBeaconBlock()
+		blk := util.NewBeaconBlock()
 		blk.Block.Slot = i
 		require.NoError(t, d.SaveBlock(context.Background(), wrapper.WrappedPhase0SignedBeaconBlock(blk)))
 	}
@@ -63,7 +62,7 @@ func TestRPCBeaconBlocksByRange_RPCHandlerReturnsBlocks(t *testing.T) {
 		defer wg.Done()
 		for i := req.StartSlot; i < req.StartSlot.Add(req.Count*req.Step); i += types.Slot(req.Step) {
 			expectSuccess(t, stream)
-			res := testutil.NewBeaconBlock()
+			res := util.NewBeaconBlock()
 			assert.NoError(t, r.cfg.P2P.Encoding().DecodeWithMaxLength(stream, res))
 			if res.Block.Slot.SubSlot(req.StartSlot).Mod(req.Step) != 0 {
 				t.Errorf("Received unexpected block slot %d", res.Block.Slot)
@@ -82,7 +81,7 @@ func TestRPCBeaconBlocksByRange_RPCHandlerReturnsBlocks(t *testing.T) {
 	expectedCapacity := int64(req.Count*10 - req.Count)
 	require.Equal(t, expectedCapacity, remainingCapacity, "Unexpected rate limiting capacity")
 
-	if testutil.WaitTimeout(&wg, 1*time.Second) {
+	if util.WaitTimeout(&wg, 1*time.Second) {
 		t.Fatal("Did not receive stream within 1 sec")
 	}
 }
@@ -103,7 +102,7 @@ func TestRPCBeaconBlocksByRange_ReturnCorrectNumberBack(t *testing.T) {
 	genRoot := [32]byte{}
 	// Populate the database with blocks that would match the request.
 	for i := req.StartSlot; i < req.StartSlot.Add(req.Step*req.Count); i += types.Slot(req.Step) {
-		blk := testutil.NewBeaconBlock()
+		blk := util.NewBeaconBlock()
 		blk.Block.Slot = i
 		if i == 0 {
 			rt, err := blk.Block.HashTreeRoot()
@@ -129,7 +128,7 @@ func TestRPCBeaconBlocksByRange_ReturnCorrectNumberBack(t *testing.T) {
 		defer wg.Done()
 		for i := newReq.StartSlot; i < newReq.StartSlot.Add(newReq.Count*newReq.Step); i += types.Slot(newReq.Step) {
 			expectSuccess(t, stream)
-			res := testutil.NewBeaconBlock()
+			res := util.NewBeaconBlock()
 			assert.NoError(t, r.cfg.P2P.Encoding().DecodeWithMaxLength(stream, res))
 			if res.Block.Slot.SubSlot(newReq.StartSlot).Mod(newReq.Step) != 0 {
 				t.Errorf("Received unexpected block slot %d", res.Block.Slot)
@@ -147,7 +146,7 @@ func TestRPCBeaconBlocksByRange_ReturnCorrectNumberBack(t *testing.T) {
 	err = r.beaconBlocksByRangeRPCHandler(context.Background(), newReq, stream1)
 	require.NoError(t, err)
 
-	if testutil.WaitTimeout(&wg, 1*time.Second) {
+	if util.WaitTimeout(&wg, 1*time.Second) {
 		t.Fatal("Did not receive stream within 1 sec")
 	}
 }
@@ -169,7 +168,7 @@ func TestRPCBeaconBlocksByRange_RPCHandlerReturnsSortedBlocks(t *testing.T) {
 	expectedRoots := make([][32]byte, req.Count)
 	// Populate the database with blocks that would match the request.
 	for i, j := endSlot, req.Count-1; i >= req.StartSlot; i -= types.Slot(req.Step) {
-		blk := testutil.NewBeaconBlock()
+		blk := util.NewBeaconBlock()
 		blk.Block.Slot = i
 		rt, err := blk.Block.HashTreeRoot()
 		require.NoError(t, err)
@@ -209,7 +208,7 @@ func TestRPCBeaconBlocksByRange_RPCHandlerReturnsSortedBlocks(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, r.beaconBlocksByRangeRPCHandler(context.Background(), req, stream1))
 
-	if testutil.WaitTimeout(&wg, 1*time.Second) {
+	if util.WaitTimeout(&wg, 1*time.Second) {
 		t.Fatal("Did not receive stream within 1 sec")
 	}
 }
@@ -230,7 +229,7 @@ func TestRPCBeaconBlocksByRange_ReturnsGenesisBlock(t *testing.T) {
 	prevRoot := [32]byte{}
 	// Populate the database with blocks that would match the request.
 	for i := req.StartSlot; i < req.StartSlot.Add(req.Step*req.Count); i++ {
-		blk := testutil.NewBeaconBlock()
+		blk := util.NewBeaconBlock()
 		blk.Block.Slot = i
 		blk.Block.ParentRoot = prevRoot[:]
 		rt, err := blk.Block.HashTreeRoot()
@@ -269,7 +268,7 @@ func TestRPCBeaconBlocksByRange_ReturnsGenesisBlock(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, r.beaconBlocksByRangeRPCHandler(context.Background(), req, stream1))
 
-	if testutil.WaitTimeout(&wg, 1*time.Second) {
+	if util.WaitTimeout(&wg, 1*time.Second) {
 		t.Fatal("Did not receive stream within 1 sec")
 	}
 }
@@ -280,7 +279,7 @@ func TestRPCBeaconBlocksByRange_RPCHandlerRateLimitOverflow(t *testing.T) {
 		// Populate the database with blocks that would match the request.
 		parentRoot := [32]byte{}
 		for i := req.StartSlot; i < req.StartSlot.Add(req.Step*req.Count); i += types.Slot(req.Step) {
-			block := testutil.NewBeaconBlock()
+			block := util.NewBeaconBlock()
 			block.Block.Slot = i
 			if req.Step == 1 {
 				block.Block.ParentRoot = parentRoot[:]
@@ -306,7 +305,7 @@ func TestRPCBeaconBlocksByRange_RPCHandlerRateLimitOverflow(t *testing.T) {
 					continue
 				}
 				expectSuccess(t, stream)
-				res := testutil.NewBeaconBlock()
+				res := util.NewBeaconBlock()
 				assert.NoError(t, r.cfg.P2P.Encoding().DecodeWithMaxLength(stream, res))
 				if res.Block.Slot.SubSlot(req.StartSlot).Mod(req.Step) != 0 {
 					t.Errorf("Received unexpected block slot %d", res.Block.Slot)
@@ -318,7 +317,7 @@ func TestRPCBeaconBlocksByRange_RPCHandlerRateLimitOverflow(t *testing.T) {
 		if err := r.beaconBlocksByRangeRPCHandler(context.Background(), req, stream); err != nil {
 			return err
 		}
-		if testutil.WaitTimeout(&wg, 1*time.Second) {
+		if util.WaitTimeout(&wg, 1*time.Second) {
 			t.Fatal("Did not receive stream within 1 sec")
 		}
 		return nil
@@ -541,7 +540,7 @@ func TestRPCBeaconBlocksByRange_EnforceResponseInvariants(t *testing.T) {
 		// Populate the database with blocks that would match the request.
 		parentRoot := [32]byte{}
 		for i := req.StartSlot; i < req.StartSlot.Add(req.Step*req.Count); i += types.Slot(req.Step) {
-			block := testutil.NewBeaconBlock()
+			block := util.NewBeaconBlock()
 			block.Block.Slot = i
 			block.Block.ParentRoot = parentRoot[:]
 			require.NoError(t, d.SaveBlock(context.Background(), wrapper.WrappedPhase0SignedBeaconBlock(block)))
@@ -560,7 +559,7 @@ func TestRPCBeaconBlocksByRange_EnforceResponseInvariants(t *testing.T) {
 			blocks := make([]*ethpb.SignedBeaconBlock, 0, req.Count)
 			for i := req.StartSlot; i < req.StartSlot.Add(req.Count*req.Step); i += types.Slot(req.Step) {
 				expectSuccess(t, stream)
-				blk := testutil.NewBeaconBlock()
+				blk := util.NewBeaconBlock()
 				assert.NoError(t, r.cfg.P2P.Encoding().DecodeWithMaxLength(stream, blk))
 				if blk.Block.Slot.SubSlot(req.StartSlot).Mod(req.Step) != 0 {
 					t.Errorf("Received unexpected block slot %d", blk.Block.Slot)
@@ -574,7 +573,7 @@ func TestRPCBeaconBlocksByRange_EnforceResponseInvariants(t *testing.T) {
 		if err := r.beaconBlocksByRangeRPCHandler(context.Background(), req, stream); err != nil {
 			return err
 		}
-		if testutil.WaitTimeout(&wg, 1*time.Second) {
+		if util.WaitTimeout(&wg, 1*time.Second) {
 			t.Fatal("Did not receive stream within 1 sec")
 		}
 		return nil
@@ -614,7 +613,7 @@ func TestRPCBeaconBlocksByRange_FilterBlocks(t *testing.T) {
 	hook := logTest.NewGlobal()
 
 	saveBlocks := func(d db2.Database, chain *chainMock.ChainService, req *pb.BeaconBlocksByRangeRequest, finalized bool) {
-		blk := testutil.NewBeaconBlock()
+		blk := util.NewBeaconBlock()
 		blk.Block.Slot = 0
 		previousRoot, err := blk.Block.HashTreeRoot()
 		require.NoError(t, err)
@@ -626,7 +625,7 @@ func TestRPCBeaconBlocksByRange_FilterBlocks(t *testing.T) {
 		for i, j := req.StartSlot, 0; i < req.StartSlot.Add(req.Step*req.Count); i += types.Slot(req.Step) {
 			parentRoot := make([]byte, 32)
 			copy(parentRoot, previousRoot[:])
-			blocks[j] = testutil.NewBeaconBlock()
+			blocks[j] = util.NewBeaconBlock()
 			blocks[j].Block.Slot = i
 			blocks[j].Block.ParentRoot = parentRoot
 			var err error
@@ -635,7 +634,7 @@ func TestRPCBeaconBlocksByRange_FilterBlocks(t *testing.T) {
 			require.NoError(t, d.SaveBlock(context.Background(), wrapper.WrappedPhase0SignedBeaconBlock(blocks[j])))
 			j++
 		}
-		stateSummaries := make([]*statepb.StateSummary, len(blocks))
+		stateSummaries := make([]*ethpb.StateSummary, len(blocks))
 
 		if finalized {
 			if chain.CanonicalRoots == nil {
@@ -644,7 +643,7 @@ func TestRPCBeaconBlocksByRange_FilterBlocks(t *testing.T) {
 			for i, b := range blocks {
 				bRoot, err := b.Block.HashTreeRoot()
 				require.NoError(t, err)
-				stateSummaries[i] = &statepb.StateSummary{
+				stateSummaries[i] = &ethpb.StateSummary{
 					Slot: b.Block.Slot,
 					Root: bRoot[:],
 				}
@@ -652,14 +651,14 @@ func TestRPCBeaconBlocksByRange_FilterBlocks(t *testing.T) {
 			}
 			require.NoError(t, d.SaveStateSummaries(context.Background(), stateSummaries))
 			require.NoError(t, d.SaveFinalizedCheckpoint(context.Background(), &ethpb.Checkpoint{
-				Epoch: helpers.SlotToEpoch(stateSummaries[len(stateSummaries)-1].Slot),
+				Epoch: slots.ToEpoch(stateSummaries[len(stateSummaries)-1].Slot),
 				Root:  stateSummaries[len(stateSummaries)-1].Root,
 			}))
 		}
 	}
 	saveBadBlocks := func(d db2.Database, chain *chainMock.ChainService,
 		req *pb.BeaconBlocksByRangeRequest, badBlockNum uint64, finalized bool) {
-		blk := testutil.NewBeaconBlock()
+		blk := util.NewBeaconBlock()
 		blk.Block.Slot = 0
 		previousRoot, err := blk.Block.HashTreeRoot()
 		require.NoError(t, err)
@@ -672,7 +671,7 @@ func TestRPCBeaconBlocksByRange_FilterBlocks(t *testing.T) {
 		for i, j := req.StartSlot, 0; i < req.StartSlot.Add(req.Step*req.Count); i += types.Slot(req.Step) {
 			parentRoot := make([]byte, 32)
 			copy(parentRoot, previousRoot[:])
-			blocks[j] = testutil.NewBeaconBlock()
+			blocks[j] = util.NewBeaconBlock()
 			blocks[j].Block.Slot = i
 			blocks[j].Block.ParentRoot = parentRoot
 			// Make the 2nd block have a bad root.
@@ -685,7 +684,7 @@ func TestRPCBeaconBlocksByRange_FilterBlocks(t *testing.T) {
 			require.NoError(t, d.SaveBlock(context.Background(), wrapper.WrappedPhase0SignedBeaconBlock(blocks[j])))
 			j++
 		}
-		stateSummaries := make([]*statepb.StateSummary, len(blocks))
+		stateSummaries := make([]*ethpb.StateSummary, len(blocks))
 		if finalized {
 			if chain.CanonicalRoots == nil {
 				chain.CanonicalRoots = map[[32]byte]bool{}
@@ -693,7 +692,7 @@ func TestRPCBeaconBlocksByRange_FilterBlocks(t *testing.T) {
 			for i, b := range blocks {
 				bRoot, err := b.Block.HashTreeRoot()
 				require.NoError(t, err)
-				stateSummaries[i] = &statepb.StateSummary{
+				stateSummaries[i] = &ethpb.StateSummary{
 					Slot: b.Block.Slot,
 					Root: bRoot[:],
 				}
@@ -701,7 +700,7 @@ func TestRPCBeaconBlocksByRange_FilterBlocks(t *testing.T) {
 			}
 			require.NoError(t, d.SaveStateSummaries(context.Background(), stateSummaries))
 			require.NoError(t, d.SaveFinalizedCheckpoint(context.Background(), &ethpb.Checkpoint{
-				Epoch: helpers.SlotToEpoch(stateSummaries[len(stateSummaries)-1].Slot),
+				Epoch: slots.ToEpoch(stateSummaries[len(stateSummaries)-1].Slot),
 				Root:  stateSummaries[len(stateSummaries)-1].Root,
 			}))
 		}
@@ -722,7 +721,7 @@ func TestRPCBeaconBlocksByRange_FilterBlocks(t *testing.T) {
 				if code != 0 || err == io.EOF {
 					break
 				}
-				blk := testutil.NewBeaconBlock()
+				blk := util.NewBeaconBlock()
 				assert.NoError(t, r.cfg.P2P.Encoding().DecodeWithMaxLength(stream, blk))
 				if blk.Block.Slot.SubSlot(req.StartSlot).Mod(req.Step) != 0 {
 					t.Errorf("Received unexpected block slot %d", blk.Block.Slot)
@@ -736,7 +735,7 @@ func TestRPCBeaconBlocksByRange_FilterBlocks(t *testing.T) {
 		if err := r.beaconBlocksByRangeRPCHandler(context.Background(), req, stream); err != nil {
 			return err
 		}
-		if testutil.WaitTimeout(&wg, 1*time.Second) {
+		if util.WaitTimeout(&wg, 1*time.Second) {
 			t.Fatal("Did not receive stream within 1 sec")
 		}
 		return nil

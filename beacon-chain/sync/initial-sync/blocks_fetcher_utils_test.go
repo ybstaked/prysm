@@ -12,19 +12,19 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	types "github.com/prysmaticlabs/eth2-types"
 	mock "github.com/prysmaticlabs/prysm/beacon-chain/blockchain/testing"
-	"github.com/prysmaticlabs/prysm/beacon-chain/core/helpers"
 	dbtest "github.com/prysmaticlabs/prysm/beacon-chain/db/testing"
 	p2pm "github.com/prysmaticlabs/prysm/beacon-chain/p2p"
 	p2pt "github.com/prysmaticlabs/prysm/beacon-chain/p2p/testing"
 	"github.com/prysmaticlabs/prysm/cmd/beacon-chain/flags"
+	"github.com/prysmaticlabs/prysm/config/params"
+	"github.com/prysmaticlabs/prysm/encoding/bytesutil"
 	eth "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
 	p2ppb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
 	"github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1/wrapper"
-	"github.com/prysmaticlabs/prysm/shared/bytesutil"
-	"github.com/prysmaticlabs/prysm/shared/params"
-	"github.com/prysmaticlabs/prysm/shared/testutil"
-	"github.com/prysmaticlabs/prysm/shared/testutil/assert"
-	"github.com/prysmaticlabs/prysm/shared/testutil/require"
+	"github.com/prysmaticlabs/prysm/testing/assert"
+	"github.com/prysmaticlabs/prysm/testing/require"
+	"github.com/prysmaticlabs/prysm/testing/util"
+	"github.com/prysmaticlabs/prysm/time/slots"
 )
 
 func TestBlocksFetcher_nonSkippedSlotAfter(t *testing.T) {
@@ -104,7 +104,7 @@ func TestBlocksFetcher_nonSkippedSlotAfter(t *testing.T) {
 				}
 			}
 		}()
-		if testutil.WaitTimeout(&wg, 5*time.Second) {
+		if util.WaitTimeout(&wg, 5*time.Second) {
 			t.Errorf("Isolated non-skipped slot not found in %d iterations: %v", i, expectedSlot)
 		} else {
 			log.Debugf("Isolated non-skipped slot found in %d iterations", i)
@@ -161,14 +161,14 @@ func TestBlocksFetcher_findFork(t *testing.T) {
 	// Chain contains blocks from 8 epochs (from 0 to 7, 256 is the start slot of epoch8).
 	chain1 := extendBlockSequence(t, []*eth.SignedBeaconBlock{}, 250)
 	finalizedSlot := types.Slot(63)
-	finalizedEpoch := helpers.SlotToEpoch(finalizedSlot)
+	finalizedEpoch := slots.ToEpoch(finalizedSlot)
 
 	genesisBlock := chain1[0]
 	require.NoError(t, beaconDB.SaveBlock(context.Background(), wrapper.WrappedPhase0SignedBeaconBlock(genesisBlock)))
 	genesisRoot, err := genesisBlock.Block.HashTreeRoot()
 	require.NoError(t, err)
 
-	st, err := testutil.NewBeaconState()
+	st, err := util.NewBeaconState()
 	require.NoError(t, err)
 	mc := &mock.ChainService{
 		State: st,
@@ -178,6 +178,8 @@ func TestBlocksFetcher_findFork(t *testing.T) {
 			Epoch: finalizedEpoch,
 			Root:  []byte(fmt.Sprintf("finalized_root %d", finalizedEpoch)),
 		},
+		Genesis:        time.Now(),
+		ValidatorsRoot: [32]byte{},
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -318,12 +320,14 @@ func TestBlocksFetcher_findForkWithPeer(t *testing.T) {
 	genesisRoot, err := genesisBlock.Block.HashTreeRoot()
 	require.NoError(t, err)
 
-	st, err := testutil.NewBeaconState()
+	st, err := util.NewBeaconState()
 	require.NoError(t, err)
 	mc := &mock.ChainService{
-		State: st,
-		Root:  genesisRoot[:],
-		DB:    beaconDB,
+		State:          st,
+		Root:           genesisRoot[:],
+		DB:             beaconDB,
+		Genesis:        time.Now(),
+		ValidatorsRoot: [32]byte{},
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -421,14 +425,14 @@ func TestBlocksFetcher_findAncestor(t *testing.T) {
 
 	knownBlocks := extendBlockSequence(t, []*eth.SignedBeaconBlock{}, 128)
 	finalizedSlot := types.Slot(63)
-	finalizedEpoch := helpers.SlotToEpoch(finalizedSlot)
+	finalizedEpoch := slots.ToEpoch(finalizedSlot)
 
 	genesisBlock := knownBlocks[0]
 	require.NoError(t, beaconDB.SaveBlock(context.Background(), wrapper.WrappedPhase0SignedBeaconBlock(genesisBlock)))
 	genesisRoot, err := genesisBlock.Block.HashTreeRoot()
 	require.NoError(t, err)
 
-	st, err := testutil.NewBeaconState()
+	st, err := util.NewBeaconState()
 	require.NoError(t, err)
 	mc := &mock.ChainService{
 		State: st,
@@ -438,6 +442,8 @@ func TestBlocksFetcher_findAncestor(t *testing.T) {
 			Epoch: finalizedEpoch,
 			Root:  []byte(fmt.Sprintf("finalized_root %d", finalizedEpoch)),
 		},
+		Genesis:        time.Now(),
+		ValidatorsRoot: [32]byte{},
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())

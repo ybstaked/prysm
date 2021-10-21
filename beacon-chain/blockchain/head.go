@@ -10,14 +10,15 @@ import (
 	"github.com/prysmaticlabs/prysm/beacon-chain/core/feed"
 	statefeed "github.com/prysmaticlabs/prysm/beacon-chain/core/feed/state"
 	"github.com/prysmaticlabs/prysm/beacon-chain/core/helpers"
+	"github.com/prysmaticlabs/prysm/beacon-chain/core/time"
 	"github.com/prysmaticlabs/prysm/beacon-chain/forkchoice/protoarray"
 	"github.com/prysmaticlabs/prysm/beacon-chain/state"
+	"github.com/prysmaticlabs/prysm/config/features"
+	"github.com/prysmaticlabs/prysm/config/params"
+	"github.com/prysmaticlabs/prysm/encoding/bytesutil"
 	ethpbv1 "github.com/prysmaticlabs/prysm/proto/eth/v1"
 	"github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1/block"
-	"github.com/prysmaticlabs/prysm/shared/bytesutil"
-	"github.com/prysmaticlabs/prysm/shared/featureconfig"
-	"github.com/prysmaticlabs/prysm/shared/params"
-	"github.com/prysmaticlabs/prysm/shared/slotutil"
+	"github.com/prysmaticlabs/prysm/time/slots"
 	"github.com/sirupsen/logrus"
 	"go.opencensus.io/trace"
 )
@@ -130,7 +131,7 @@ func (s *Service) saveHead(ctx context.Context, headRoot [32]byte) error {
 			"newSlot": fmt.Sprintf("%d", newHeadSlot),
 			"oldSlot": fmt.Sprintf("%d", headSlot),
 		}).Debug("Chain reorg occurred")
-		absoluteSlotDifference := slotutil.AbsoluteValueSlotDifference(newHeadSlot, headSlot)
+		absoluteSlotDifference := slots.AbsoluteValueSlotDifference(newHeadSlot, headSlot)
 		s.cfg.StateNotifier.StateFeed().Send(&feed.Event{
 			Type: statefeed.Reorg,
 			Data: &ethpbv1.EventChainReorg{
@@ -140,7 +141,7 @@ func (s *Service) saveHead(ctx context.Context, headRoot [32]byte) error {
 				NewHeadBlock: headRoot[:],
 				OldHeadState: oldStateRoot,
 				NewHeadState: newStateRoot,
-				Epoch:        helpers.SlotToEpoch(newHeadSlot),
+				Epoch:        slots.ToEpoch(newHeadSlot),
 			},
 		})
 
@@ -259,6 +260,13 @@ func (s *Service) headGenesisValidatorRoot() [32]byte {
 	return bytesutil.ToBytes32(s.head.state.GenesisValidatorRoot())
 }
 
+// This returns the validator referenced by the provided index in
+// the head state.
+// This is a lock free version.
+func (s *Service) headValidatorAtIndex(index types.ValidatorIndex) (state.ReadOnlyValidator, error) {
+	return s.head.state.ValidatorAtIndexReadOnly(index)
+}
+
 // Returns true if head state exists.
 // This is the lock free version.
 func (s *Service) hasHeadState() bool {
@@ -290,7 +298,7 @@ func (s *Service) cacheJustifiedStateBalances(ctx context.Context, justifiedRoot
 		return errors.New("justified state can't be nil")
 	}
 
-	epoch := helpers.CurrentEpoch(justifiedState)
+	epoch := time.CurrentEpoch(justifiedState)
 
 	justifiedBalances := make([]uint64, justifiedState.NumValidators())
 	if err := justifiedState.ReadFromEveryValidator(func(idx int, val state.ReadOnlyValidator) error {
@@ -328,15 +336,15 @@ func (s *Service) notifyNewHeadEvent(
 	currentDutyDependentRoot := s.genesisRoot[:]
 
 	var previousDutyEpoch types.Epoch
-	currentDutyEpoch := helpers.SlotToEpoch(newHeadSlot)
+	currentDutyEpoch := slots.ToEpoch(newHeadSlot)
 	if currentDutyEpoch > 0 {
 		previousDutyEpoch = currentDutyEpoch.Sub(1)
 	}
-	currentDutySlot, err := helpers.StartSlot(currentDutyEpoch)
+	currentDutySlot, err := slots.EpochStart(currentDutyEpoch)
 	if err != nil {
 		return errors.Wrap(err, "could not get duty slot")
 	}
-	previousDutySlot, err := helpers.StartSlot(previousDutyEpoch)
+	previousDutySlot, err := slots.EpochStart(previousDutyEpoch)
 	if err != nil {
 		return errors.Wrap(err, "could not get duty slot")
 	}
@@ -358,7 +366,7 @@ func (s *Service) notifyNewHeadEvent(
 			Slot:                      newHeadSlot,
 			Block:                     newHeadRoot,
 			State:                     newHeadStateRoot,
-			EpochTransition:           helpers.IsEpochEnd(newHeadSlot),
+			EpochTransition:           slots.IsEpochStart(newHeadSlot),
 			PreviousDutyDependentRoot: previousDutyDependentRoot,
 			CurrentDutyDependentRoot:  currentDutyDependentRoot,
 		},
@@ -370,7 +378,7 @@ func (s *Service) notifyNewHeadEvent(
 // attestation pool. It also filters out the attestations that is one epoch older as a
 // defense so invalid attestations don't flow into the attestation pool.
 func (s *Service) saveOrphanedAtts(ctx context.Context, orphanedRoot [32]byte) error {
-	if !featureconfig.Get().CorrectlyInsertOrphanedAtts {
+	if !features.Get().CorrectlyInsertOrphanedAtts {
 		return nil
 	}
 

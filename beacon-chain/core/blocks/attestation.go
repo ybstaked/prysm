@@ -7,12 +7,14 @@ import (
 	"github.com/pkg/errors"
 	types "github.com/prysmaticlabs/eth2-types"
 	"github.com/prysmaticlabs/prysm/beacon-chain/core/helpers"
+	"github.com/prysmaticlabs/prysm/beacon-chain/core/signing"
+	"github.com/prysmaticlabs/prysm/beacon-chain/core/time"
 	"github.com/prysmaticlabs/prysm/beacon-chain/state"
+	"github.com/prysmaticlabs/prysm/config/params"
+	"github.com/prysmaticlabs/prysm/crypto/bls"
 	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
+	"github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1/attestation"
 	"github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1/block"
-	"github.com/prysmaticlabs/prysm/shared/attestationutil"
-	"github.com/prysmaticlabs/prysm/shared/bls"
-	"github.com/prysmaticlabs/prysm/shared/params"
 	"go.opencensus.io/trace"
 )
 
@@ -50,8 +52,8 @@ func VerifyAttestationNoVerifySignature(
 	if err := helpers.ValidateNilAttestation(att); err != nil {
 		return err
 	}
-	currEpoch := helpers.CurrentEpoch(beaconState)
-	prevEpoch := helpers.PrevEpoch(beaconState)
+	currEpoch := time.CurrentEpoch(beaconState)
+	prevEpoch := time.PrevEpoch(beaconState)
 	data := att.Data
 	if data.Target.Epoch != prevEpoch && data.Target.Epoch != currEpoch {
 		return fmt.Errorf(
@@ -95,7 +97,7 @@ func VerifyAttestationNoVerifySignature(
 			params.BeaconConfig().SlotsPerEpoch,
 		)
 	}
-	activeValidatorCount, err := helpers.ActiveValidatorCount(beaconState, att.Data.Target.Epoch)
+	activeValidatorCount, err := helpers.ActiveValidatorCount(ctx, beaconState, att.Data.Target.Epoch)
 	if err != nil {
 		return err
 	}
@@ -104,21 +106,21 @@ func VerifyAttestationNoVerifySignature(
 		return fmt.Errorf("committee index %d >= committee count %d", att.Data.CommitteeIndex, c)
 	}
 
-	if err := helpers.VerifyAttestationBitfieldLengths(beaconState, att); err != nil {
+	if err := helpers.VerifyAttestationBitfieldLengths(ctx, beaconState, att); err != nil {
 		return errors.Wrap(err, "could not verify attestation bitfields")
 	}
 
 	// Verify attesting indices are correct.
-	committee, err := helpers.BeaconCommitteeFromState(beaconState, att.Data.Slot, att.Data.CommitteeIndex)
+	committee, err := helpers.BeaconCommitteeFromState(ctx, beaconState, att.Data.Slot, att.Data.CommitteeIndex)
 	if err != nil {
 		return err
 	}
-	indexedAtt, err := attestationutil.ConvertToIndexed(ctx, att, committee)
+	indexedAtt, err := attestation.ConvertToIndexed(ctx, att, committee)
 	if err != nil {
 		return err
 	}
 
-	return attestationutil.IsValidAttestationIndices(ctx, indexedAtt)
+	return attestation.IsValidAttestationIndices(ctx, indexedAtt)
 }
 
 // ProcessAttestationNoVerifySignature processes the attestation without verifying the attestation signature. This
@@ -135,10 +137,10 @@ func ProcessAttestationNoVerifySignature(
 		return nil, err
 	}
 
-	currEpoch := helpers.CurrentEpoch(beaconState)
+	currEpoch := time.CurrentEpoch(beaconState)
 	data := att.Data
 	s := att.Data.Slot
-	proposerIndex, err := helpers.BeaconProposerIndex(beaconState)
+	proposerIndex, err := helpers.BeaconProposerIndex(ctx, beaconState)
 	if err != nil {
 		return nil, err
 	}
@@ -168,11 +170,11 @@ func VerifyAttestationSignature(ctx context.Context, beaconState state.ReadOnlyB
 	if err := helpers.ValidateNilAttestation(att); err != nil {
 		return err
 	}
-	committee, err := helpers.BeaconCommitteeFromState(beaconState, att.Data.Slot, att.Data.CommitteeIndex)
+	committee, err := helpers.BeaconCommitteeFromState(ctx, beaconState, att.Data.Slot, att.Data.CommitteeIndex)
 	if err != nil {
 		return err
 	}
-	indexedAtt, err := attestationutil.ConvertToIndexed(ctx, att, committee)
+	indexedAtt, err := attestation.ConvertToIndexed(ctx, att, committee)
 	if err != nil {
 		return err
 	}
@@ -199,10 +201,10 @@ func VerifyIndexedAttestation(ctx context.Context, beaconState state.ReadOnlyBea
 	ctx, span := trace.StartSpan(ctx, "core.VerifyIndexedAttestation")
 	defer span.End()
 
-	if err := attestationutil.IsValidAttestationIndices(ctx, indexedAtt); err != nil {
+	if err := attestation.IsValidAttestationIndices(ctx, indexedAtt); err != nil {
 		return err
 	}
-	domain, err := helpers.Domain(
+	domain, err := signing.Domain(
 		beaconState.Fork(),
 		indexedAtt.Data.Target.Epoch,
 		params.BeaconConfig().DomainBeaconAttester,
@@ -221,5 +223,5 @@ func VerifyIndexedAttestation(ctx context.Context, beaconState state.ReadOnlyBea
 		}
 		pubkeys = append(pubkeys, pk)
 	}
-	return attestationutil.VerifyIndexedAttestationSig(ctx, indexedAtt, pubkeys, domain)
+	return attestation.VerifyIndexedAttestationSig(ctx, indexedAtt, pubkeys, domain)
 }

@@ -11,14 +11,16 @@ import (
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/protocol"
 	types "github.com/prysmaticlabs/eth2-types"
+	mock "github.com/prysmaticlabs/prysm/beacon-chain/blockchain/testing"
 	db "github.com/prysmaticlabs/prysm/beacon-chain/db/testing"
+	"github.com/prysmaticlabs/prysm/beacon-chain/p2p"
 	p2ptest "github.com/prysmaticlabs/prysm/beacon-chain/p2p/testing"
 	p2ptypes "github.com/prysmaticlabs/prysm/beacon-chain/p2p/types"
 	pb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
 	"github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1/wrapper"
-	"github.com/prysmaticlabs/prysm/shared/testutil"
-	"github.com/prysmaticlabs/prysm/shared/testutil/assert"
-	"github.com/prysmaticlabs/prysm/shared/testutil/require"
+	"github.com/prysmaticlabs/prysm/testing/assert"
+	"github.com/prysmaticlabs/prysm/testing/require"
+	"github.com/prysmaticlabs/prysm/testing/util"
 )
 
 func TestPingRPCHandler_ReceivesPing(t *testing.T) {
@@ -50,7 +52,7 @@ func TestPingRPCHandler_ReceivesPing(t *testing.T) {
 	p1.Peers().SetMetadata(p2.BHost.ID(), p2.LocalMetadata)
 
 	// Setup streams
-	pcl := protocol.ID("/testing")
+	pcl := protocol.ID(p2p.RPCPingTopicV1)
 	topic := string(pcl)
 	r.rateLimiter.limiterMap[topic] = leakybucket.NewCollector(1, 1, false)
 	var wg sync.WaitGroup
@@ -68,7 +70,7 @@ func TestPingRPCHandler_ReceivesPing(t *testing.T) {
 
 	assert.NoError(t, r.pingHandler(context.Background(), &seqNumber, stream1))
 
-	if testutil.WaitTimeout(&wg, 1*time.Second) {
+	if util.WaitTimeout(&wg, 1*time.Second) {
 		t.Fatal("Did not receive stream within 1 sec")
 	}
 
@@ -97,8 +99,9 @@ func TestPingRPCHandler_SendsPing(t *testing.T) {
 	d := db.SetupDB(t)
 	r := &Service{
 		cfg: &Config{
-			DB:  d,
-			P2P: p1,
+			DB:    d,
+			P2P:   p1,
+			Chain: &mock.ChainService{ValidatorsRoot: [32]byte{}, Genesis: time.Now()},
 		},
 		rateLimiter: newRateLimiter(p1),
 	}
@@ -111,8 +114,9 @@ func TestPingRPCHandler_SendsPing(t *testing.T) {
 
 	r2 := &Service{
 		cfg: &Config{
-			DB:  d,
-			P2P: p2,
+			DB:    d,
+			P2P:   p2,
+			Chain: &mock.ChainService{ValidatorsRoot: [32]byte{}, Genesis: time.Now()},
 		},
 		rateLimiter: newRateLimiter(p2),
 	}
@@ -133,7 +137,7 @@ func TestPingRPCHandler_SendsPing(t *testing.T) {
 
 	assert.NoError(t, r.sendPingRequest(context.Background(), p2.BHost.ID()))
 
-	if testutil.WaitTimeout(&wg, 1*time.Second) {
+	if util.WaitTimeout(&wg, 1*time.Second) {
 		t.Fatal("Did not receive stream within 1 sec")
 	}
 
@@ -194,7 +198,7 @@ func TestPingRPCHandler_BadSequenceNumber(t *testing.T) {
 	err = r.pingHandler(context.Background(), &wantedSeq, stream1)
 	assert.ErrorContains(t, p2ptypes.ErrInvalidSequenceNum.Error(), err)
 
-	if testutil.WaitTimeout(&wg, 1*time.Second) {
+	if util.WaitTimeout(&wg, 1*time.Second) {
 		t.Fatal("Did not receive stream within 1 sec")
 	}
 

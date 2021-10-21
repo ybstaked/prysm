@@ -6,12 +6,16 @@ import (
 
 	types "github.com/prysmaticlabs/eth2-types"
 	"github.com/prysmaticlabs/prysm/beacon-chain/core/helpers"
+	"github.com/prysmaticlabs/prysm/beacon-chain/core/signing"
+	"github.com/prysmaticlabs/prysm/beacon-chain/core/time"
+	"github.com/prysmaticlabs/prysm/beacon-chain/core/transition"
 	"github.com/prysmaticlabs/prysm/beacon-chain/state"
+	"github.com/prysmaticlabs/prysm/config/params"
+	"github.com/prysmaticlabs/prysm/contracts/deposit"
+	"github.com/prysmaticlabs/prysm/encoding/bytesutil"
+	"github.com/prysmaticlabs/prysm/monitoring/tracing"
 	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	"github.com/prysmaticlabs/prysm/shared/bytesutil"
-	"github.com/prysmaticlabs/prysm/shared/depositutil"
-	"github.com/prysmaticlabs/prysm/shared/params"
-	"github.com/prysmaticlabs/prysm/shared/traceutil"
+	"github.com/prysmaticlabs/prysm/time/slots"
 	"go.opencensus.io/trace"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -104,7 +108,7 @@ func (vs *Server) CheckDoppelGanger(ctx context.Context, req *ethpb.DoppelGanger
 	}
 	// We walk back from the current head state to the state at the beginning of the previous 2 epochs.
 	// Where S_i , i := 0,1,2. i = 0 would signify the current head state in this epoch.
-	currEpoch := helpers.SlotToEpoch(headState.Slot())
+	currEpoch := slots.ToEpoch(headState.Slot())
 	previousEpoch, err := currEpoch.SafeSub(1)
 	if err != nil {
 		previousEpoch = currEpoch
@@ -113,11 +117,11 @@ func (vs *Server) CheckDoppelGanger(ctx context.Context, req *ethpb.DoppelGanger
 	if err != nil {
 		olderEpoch = previousEpoch
 	}
-	prevState, err := vs.StateGen.StateBySlot(ctx, params.BeaconConfig().SlotsPerEpoch.Mul(uint64(previousEpoch)))
+	prevState, err := vs.retrieveAfterEpochTransition(ctx, previousEpoch)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "Could not get previous state")
 	}
-	olderState, err := vs.StateGen.StateBySlot(ctx, params.BeaconConfig().SlotsPerEpoch.Mul(uint64(olderEpoch)))
+	olderState, err := vs.retrieveAfterEpochTransition(ctx, olderEpoch)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "Could not get older state")
 	}
@@ -156,6 +160,7 @@ func (vs *Server) CheckDoppelGanger(ctx context.Context, req *ethpb.DoppelGanger
 		// If the next epoch's balance is higher, we mark it as an existing
 		// duplicate.
 		if nextBal > baseBal {
+			log.Infof("current %d with last epoch %d and difference in bal %d gwei", currEpoch, v.Epoch, nextBal-baseBal)
 			resp.Responses = append(resp.Responses,
 				&ethpb.DoppelGangerResponse_ValidatorResponse{
 					PublicKey:       v.PublicKey,
@@ -237,14 +242,14 @@ func (vs *Server) validatorStatus(
 	}
 	vStatus, idx, err := statusForPubKey(headState, pubKey)
 	if err != nil && err != errPubkeyDoesNotExist {
-		traceutil.AnnotateError(span, err)
+		tracing.AnnotateError(span, err)
 		return resp, nonExistentIndex
 	}
 	resp.Status = vStatus
 	if err != errPubkeyDoesNotExist {
 		val, err := headState.ValidatorAtIndexReadOnly(idx)
 		if err != nil {
-			traceutil.AnnotateError(span, err)
+			tracing.AnnotateError(span, err)
 			return resp, idx
 		}
 		resp.ActivationEpoch = val.ActivationEpoch()
@@ -258,11 +263,11 @@ func (vs *Server) validatorStatus(
 			log.Warn("Not connected to ETH1. Cannot determine validator ETH1 deposit block number")
 			return resp, nonExistentIndex
 		}
-		deposit, eth1BlockNumBigInt := vs.DepositFetcher.DepositByPubkey(ctx, pubKey)
+		dep, eth1BlockNumBigInt := vs.DepositFetcher.DepositByPubkey(ctx, pubKey)
 		if eth1BlockNumBigInt == nil { // No deposit found in ETH1.
 			return resp, nonExistentIndex
 		}
-		domain, err := helpers.ComputeDomain(
+		domain, err := signing.ComputeDomain(
 			params.BeaconConfig().DomainDeposit,
 			nil, /*forkVersion*/
 			nil, /*genesisValidatorsRoot*/
@@ -271,13 +276,13 @@ func (vs *Server) validatorStatus(
 			log.Warn("Could not compute domain")
 			return resp, nonExistentIndex
 		}
-		if err := depositutil.VerifyDepositSignature(deposit.Data, domain); err != nil {
+		if err := deposit.VerifyDepositSignature(dep.Data, domain); err != nil {
 			resp.Status = ethpb.ValidatorStatus_INVALID
 			log.Warn("Invalid Eth1 deposit")
 			return resp, nonExistentIndex
 		}
 		// Set validator deposit status if their deposit is visible.
-		resp.Status = depositStatus(deposit.Data.Amount)
+		resp.Status = depositStatus(dep.Data.Amount)
 		resp.Eth1DepositBlockNumber = eth1BlockNumBigInt.Uint64()
 
 		return resp, nonExistentIndex
@@ -302,7 +307,7 @@ func (vs *Server) validatorStatus(
 			if err != nil {
 				return resp, idx
 			}
-			if helpers.IsActiveValidatorUsingTrie(val, helpers.CurrentEpoch(headState)) {
+			if helpers.IsActiveValidatorUsingTrie(val, time.CurrentEpoch(headState)) {
 				lastActivatedvalidatorIndex = types.ValidatorIndex(j)
 				break
 			}
@@ -333,7 +338,7 @@ func assignmentStatus(beaconState state.ReadOnlyBeaconState, validatorIndex type
 	if err != nil {
 		return ethpb.ValidatorStatus_UNKNOWN_STATUS
 	}
-	currentEpoch := helpers.CurrentEpoch(beaconState)
+	currentEpoch := time.CurrentEpoch(beaconState)
 	farFutureEpoch := params.BeaconConfig().FarFutureEpoch
 	validatorBalance := validator.EffectiveBalance()
 
@@ -365,4 +370,16 @@ func depositStatus(depositOrBalance uint64) ethpb.ValidatorStatus {
 		return ethpb.ValidatorStatus_PARTIALLY_DEPOSITED
 	}
 	return ethpb.ValidatorStatus_DEPOSITED
+}
+
+func (vs *Server) retrieveAfterEpochTransition(ctx context.Context, epoch types.Epoch) (state.BeaconState, error) {
+	endSlot, err := slots.EpochEnd(epoch)
+	if err != nil {
+		return nil, err
+	}
+	retState, err := vs.StateGen.StateBySlot(ctx, endSlot)
+	if err != nil {
+		return nil, err
+	}
+	return transition.ProcessSlots(ctx, retState, retState.Slot()+1)
 }

@@ -7,11 +7,10 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/prysmaticlabs/prysm/beacon-chain/state/stateutil"
+	"github.com/prysmaticlabs/prysm/config/params"
+	"github.com/prysmaticlabs/prysm/crypto/hash"
+	"github.com/prysmaticlabs/prysm/encoding/ssz"
 	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	"github.com/prysmaticlabs/prysm/shared/copyutil"
-	"github.com/prysmaticlabs/prysm/shared/hashutil"
-	"github.com/prysmaticlabs/prysm/shared/htrutils"
-	"github.com/prysmaticlabs/prysm/shared/params"
 )
 
 // PreviousEpochAttestations corresponding to blocks on the beacon chain.
@@ -36,7 +35,7 @@ func (b *BeaconState) previousEpochAttestations() []*ethpb.PendingAttestation {
 		return nil
 	}
 
-	return copyutil.CopyPendingAttestationSlice(b.state.PreviousEpochAttestations)
+	return ethpb.CopyPendingAttestationSlice(b.state.PreviousEpochAttestations)
 }
 
 // CurrentEpochAttestations corresponding to blocks on the beacon chain.
@@ -61,7 +60,7 @@ func (b *BeaconState) currentEpochAttestations() []*ethpb.PendingAttestation {
 		return nil
 	}
 
-	return copyutil.CopyPendingAttestationSlice(b.state.CurrentEpochAttestations)
+	return ethpb.CopyPendingAttestationSlice(b.state.CurrentEpochAttestations)
 }
 
 func (h *stateRootHasher) epochAttestationsRoot(atts []*ethpb.PendingAttestation) ([32]byte, error) {
@@ -70,7 +69,7 @@ func (h *stateRootHasher) epochAttestationsRoot(atts []*ethpb.PendingAttestation
 		return [32]byte{}, fmt.Errorf("epoch attestation exceeds max length %d", max)
 	}
 
-	hasher := hashutil.CustomSHA256Hasher()
+	hasher := hash.CustomSHA256Hasher()
 	roots := make([][]byte, len(atts))
 	for i := 0; i < len(atts); i++ {
 		pendingRoot, err := h.pendingAttestationRoot(hasher, atts[i])
@@ -80,7 +79,7 @@ func (h *stateRootHasher) epochAttestationsRoot(atts []*ethpb.PendingAttestation
 		roots[i] = pendingRoot[:]
 	}
 
-	attsRootsRoot, err := htrutils.BitwiseMerkleize(
+	attsRootsRoot, err := ssz.BitwiseMerkleize(
 		hasher,
 		roots,
 		uint64(len(roots)),
@@ -96,11 +95,11 @@ func (h *stateRootHasher) epochAttestationsRoot(atts []*ethpb.PendingAttestation
 	// We need to mix in the length of the slice.
 	attsLenRoot := make([]byte, 32)
 	copy(attsLenRoot, attsLenBuf.Bytes())
-	res := htrutils.MixInLength(attsRootsRoot, attsLenRoot)
+	res := ssz.MixInLength(attsRootsRoot, attsLenRoot)
 	return res, nil
 }
 
-func (h *stateRootHasher) pendingAttestationRoot(hasher htrutils.HashFn, att *ethpb.PendingAttestation) ([32]byte, error) {
+func (h *stateRootHasher) pendingAttestationRoot(hasher ssz.HashFn, att *ethpb.PendingAttestation) ([32]byte, error) {
 	if att == nil {
 		return [32]byte{}, errors.New("nil pending attestation")
 	}

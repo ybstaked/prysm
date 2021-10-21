@@ -1,10 +1,17 @@
 package helpers
 
 import (
+	"errors"
+
 	types "github.com/prysmaticlabs/eth2-types"
+	"github.com/prysmaticlabs/prysm/beacon-chain/cache"
 	"github.com/prysmaticlabs/prysm/beacon-chain/state"
-	"github.com/prysmaticlabs/prysm/shared/params"
+	"github.com/prysmaticlabs/prysm/config/params"
+	mathutil "github.com/prysmaticlabs/prysm/math"
+	"github.com/prysmaticlabs/prysm/time/slots"
 )
+
+var balanceCache = cache.NewEffectiveBalanceCache()
 
 // TotalBalance returns the total amount at stake in Gwei
 // of input validators.
@@ -47,8 +54,19 @@ func TotalBalance(state state.ReadOnlyValidators, indices []types.ValidatorIndex
 //    """
 //    return get_total_balance(state, set(get_active_validator_indices(state, get_current_epoch(state))))
 func TotalActiveBalance(s state.ReadOnlyBeaconState) (uint64, error) {
+	bal, err := balanceCache.Get(s)
+	switch {
+	case err == nil:
+		return bal, nil
+	case errors.Is(err, cache.ErrNotFound):
+		break
+	default:
+		// In the event, we encounter another error we return it.
+		return 0, err
+	}
+
 	total := uint64(0)
-	epoch := SlotToEpoch(s.Slot())
+	epoch := slots.ToEpoch(s.Slot())
 	if err := s.ReadFromEveryValidator(func(idx int, val state.ReadOnlyValidator) error {
 		if IsActiveValidatorUsingTrie(val, epoch) {
 			total += val.EffectiveBalance()
@@ -57,6 +75,11 @@ func TotalActiveBalance(s state.ReadOnlyBeaconState) (uint64, error) {
 	}); err != nil {
 		return 0, err
 	}
+
+	if err := balanceCache.AddTotalEffectiveBalance(s, total); err != nil {
+		return 0, err
+	}
+
 	return total, nil
 }
 
@@ -73,7 +96,11 @@ func IncreaseBalance(state state.BeaconState, idx types.ValidatorIndex, delta ui
 	if err != nil {
 		return err
 	}
-	return state.UpdateBalancesAtIndex(idx, IncreaseBalanceWithVal(balAtIdx, delta))
+	newBal, err := IncreaseBalanceWithVal(balAtIdx, delta)
+	if err != nil {
+		return err
+	}
+	return state.UpdateBalancesAtIndex(idx, newBal)
 }
 
 // IncreaseBalanceWithVal increases validator with the given 'index' balance by 'delta' in Gwei.
@@ -86,8 +113,8 @@ func IncreaseBalance(state state.BeaconState, idx types.ValidatorIndex, delta ui
 //    Increase the validator balance at index ``index`` by ``delta``.
 //    """
 //    state.balances[index] += delta
-func IncreaseBalanceWithVal(currBalance, delta uint64) uint64 {
-	return currBalance + delta
+func IncreaseBalanceWithVal(currBalance, delta uint64) (uint64, error) {
+	return mathutil.Add64(currBalance, delta)
 }
 
 // DecreaseBalance decreases validator with the given 'index' balance by 'delta' in Gwei.

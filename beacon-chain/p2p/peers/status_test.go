@@ -16,12 +16,13 @@ import (
 	"github.com/prysmaticlabs/prysm/beacon-chain/p2p/peers"
 	"github.com/prysmaticlabs/prysm/beacon-chain/p2p/peers/peerdata"
 	"github.com/prysmaticlabs/prysm/beacon-chain/p2p/peers/scorers"
+	"github.com/prysmaticlabs/prysm/config/features"
+	"github.com/prysmaticlabs/prysm/config/params"
 	ethpb "github.com/prysmaticlabs/prysm/proto/eth/v1"
 	pb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
 	"github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1/wrapper"
-	"github.com/prysmaticlabs/prysm/shared/params"
-	"github.com/prysmaticlabs/prysm/shared/testutil/assert"
-	"github.com/prysmaticlabs/prysm/shared/testutil/require"
+	"github.com/prysmaticlabs/prysm/testing/assert"
+	"github.com/prysmaticlabs/prysm/testing/require"
 )
 
 func TestStatus(t *testing.T) {
@@ -302,6 +303,32 @@ func TestPeerChainState(t *testing.T) {
 	}
 }
 
+func TestPeerWithNilChainState(t *testing.T) {
+	maxBadResponses := 2
+	p := peers.NewStatus(context.Background(), &peers.StatusConfig{
+		PeerLimit: 30,
+		ScorerParams: &scorers.Config{
+			BadResponsesScorerConfig: &scorers.BadResponsesScorerConfig{
+				Threshold: maxBadResponses,
+			},
+		},
+	})
+
+	id, err := peer.Decode("16Uiu2HAkyWZ4Ni1TpvDS8dPxsozmHY85KaiFjodQuV6Tz5tkHVeR")
+	require.NoError(t, err)
+	address, err := ma.NewMultiaddr("/ip4/213.202.254.180/tcp/13000")
+	require.NoError(t, err, "Failed to create address")
+	direction := network.DirInbound
+	p.Add(new(enr.Record), id, address, direction)
+
+	p.SetChainState(id, nil)
+
+	resChainState, err := p.ChainState(id)
+	require.Equal(t, peerdata.ErrNoPeerStatus, err)
+	var nothing *pb.Status
+	require.Equal(t, resChainState, nothing)
+}
+
 func TestPeerBadResponses(t *testing.T) {
 	maxBadResponses := 2
 	p := peers.NewStatus(context.Background(), &peers.StatusConfig{
@@ -522,6 +549,10 @@ func TestPrune(t *testing.T) {
 }
 
 func TestPeerIPTracker(t *testing.T) {
+	resetCfg := features.InitWithReset(&features.Flags{
+		EnablePeerScorer: false,
+	})
+	defer resetCfg()
 	maxBadResponses := 2
 	p := peers.NewStatus(context.Background(), &peers.StatusConfig{
 		PeerLimit: 30,
@@ -660,6 +691,10 @@ func TestAtInboundPeerLimit(t *testing.T) {
 }
 
 func TestPrunePeers(t *testing.T) {
+	resetCfg := features.InitWithReset(&features.Flags{
+		EnablePeerScorer: false,
+	})
+	defer resetCfg()
 	p := peers.NewStatus(context.Background(), &peers.StatusConfig{
 		PeerLimit: 30,
 		ScorerParams: &scorers.Config{

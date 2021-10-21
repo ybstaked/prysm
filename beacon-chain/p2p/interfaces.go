@@ -35,6 +35,7 @@ type P2P interface {
 type Broadcaster interface {
 	Broadcast(context.Context, proto.Message) error
 	BroadcastAttestation(ctx context.Context, subnet uint64, att *ethpb.Attestation) error
+	BroadcastSyncCommitteeMessage(ctx context.Context, subnet uint64, sMsg *ethpb.SyncCommitteeMessage) error
 }
 
 // SetStreamHandler configures p2p to handle streams of a certain topic ID.
@@ -76,7 +77,7 @@ type PeerManager interface {
 	ENR() *enr.Record
 	DiscoveryAddresses() ([]multiaddr.Multiaddr, error)
 	RefreshENR()
-	FindPeersWithSubnet(ctx context.Context, topic string, index, threshold uint64) (bool, error)
+	FindPeersWithSubnet(ctx context.Context, topic string, subIndex uint64, threshold int) (bool, error)
 	AddPingMethod(reqFunc func(ctx context.Context, id peer.ID) error)
 }
 
