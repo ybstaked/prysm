@@ -211,6 +211,7 @@ func (s *Service) Start() {
 		},
 		SyncCommitteePool: s.cfg.SyncCommitteeObjectPool,
 	}
+	validatorServer.ServerIface = validatorServerV1
 
 	nodeServer := &nodev1alpha1.Server{
 		LogsStreamer:         logs.NewStreamServer(),

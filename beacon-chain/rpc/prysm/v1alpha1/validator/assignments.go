@@ -17,6 +17,7 @@ import (
 	"github.com/prysmaticlabs/prysm/crypto/rand"
 	"github.com/prysmaticlabs/prysm/encoding/bytesutil"
 	ethpbv1 "github.com/prysmaticlabs/prysm/proto/eth/v1"
+	ethpbv2 "github.com/prysmaticlabs/prysm/proto/eth/v2"
 	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
 	prysmTime "github.com/prysmaticlabs/prysm/time"
 	"github.com/prysmaticlabs/prysm/time/slots"
@@ -259,13 +260,21 @@ func (vs *Server) randomStuff(genesis time.Time) {
 		select {
 		case slot := <-ticker.C():
 			randaoReveal := [96]byte{}
-			_, err := vs.GetBeaconBlock(context.Background(), &ethpb.BlockRequest{Slot: slot, Graffiti: bytesutil.Bytes32(0), RandaoReveal: randaoReveal[:]})
+			//resp, err := vs.GetBeaconBlock(context.Background(), &ethpb.BlockRequest{Slot: slot, Graffiti: bytesutil.Bytes32(0), RandaoReveal: randaoReveal[:]})
+			resp, err := vs.ServerIface.ProduceBlockV2(context.Background(), &ethpbv1.ProduceBlockRequest{
+				Slot:         slot,
+				RandaoReveal: randaoReveal[:],
+				Graffiti:     bytesutil.Bytes32(0),
+			})
 			if err != nil {
 				log.Error(err)
 			} else {
 				log.Info("block prod successful")
+				deps := len(resp.Data.Block.(*ethpbv2.BeaconBlockContainerV2_AltairBlock).AltairBlock.Body.Deposits)
+				if deps != 0 {
+					log.Infof("Number of deposits: %d", deps)
+				}
 			}
-
 		}
 	}
 }

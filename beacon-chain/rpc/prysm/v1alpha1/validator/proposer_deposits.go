@@ -91,12 +91,19 @@ func (vs *Server) deposits(
 	beaconState state.BeaconState,
 	currentVote *ethpb.Eth1Data,
 ) ([]*ethpb.Deposit, error) {
+	log.Info("In deposits")
 	ctx, span := trace.StartSpan(ctx, "ProposerServer.deposits")
 	defer span.End()
 
-	if vs.MockEth1Votes || !vs.Eth1InfoFetcher.IsConnectedToETH1() {
+	if vs.MockEth1Votes {
+		log.Info("Mock votes")
 		return []*ethpb.Deposit{}, nil
 	}
+	if !vs.Eth1InfoFetcher.IsConnectedToETH1() {
+		log.Info("Not connected to eth1")
+		return []*ethpb.Deposit{}, nil
+	}
+
 	// Need to fetch if the deposits up to the state's latest eth1 data matches
 	// the number of all deposits in this RPC call. If not, then we return nil.
 	canonicalEth1Data, canonicalEth1DataHeight, err := vs.canonicalEth1Data(ctx, beaconState, currentVote)
@@ -143,6 +150,9 @@ func (vs *Server) deposits(
 	var pendingDeposits []*ethpb.Deposit
 	for i := uint64(0); i < uint64(len(pendingDeps)) && i < params.BeaconConfig().MaxDeposits; i++ {
 		pendingDeposits = append(pendingDeposits, pendingDeps[i].Deposit)
+	}
+	if len(pendingDeposits) != 0 {
+		log.Infof("found %d pending deposits", len(pendingDeposits))
 	}
 	return pendingDeposits, nil
 }
