@@ -29,6 +29,7 @@ func (s *Service) checkSlashableAttestations(
 
 	// Group by chunk index and check for surround vote slashings.
 	groupedAtts := s.groupByValidatorChunkIndex(atts)
+	i := 0
 	for validatorChunkIdx, batch := range groupedAtts {
 		start := time.Now()
 		attSlashings, err := s.detectAllAttesterSlashings(ctx, &chunkUpdateArgs{
@@ -40,12 +41,17 @@ func (s *Service) checkSlashableAttestations(
 		}
 		slashings = append(slashings, attSlashings...)
 		indices = append(indices, s.params.validatorIndicesInChunk(validatorChunkIdx)...)
-		fmt.Printf("Took %v to process batch of size %d\n", time.Since(start), len(batch))
-		break
+		if i < 5 {
+			fmt.Printf("Took %v to process batch of size %d\n", time.Since(start), len(batch))
+		}
+		i++
 	}
+	start := time.Now()
+	fmt.Println("Writing last epoch written for validators", len(indices))
 	if err := s.serviceCfg.Database.SaveLastEpochWrittenForValidators(ctx, indices, currentEpoch); err != nil {
 		return nil, err
 	}
+	fmt.Printf("Saved last epoch written for vals %v\n", time.Since(start))
 	if len(slashings) > 0 {
 		log.WithField("numSlashings", len(slashings)).Info("Slashable attestation offenses found")
 	}
