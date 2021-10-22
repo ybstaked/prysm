@@ -110,7 +110,7 @@ func (s *Service) processQueuedAttestations(ctx context.Context, slotTicker <-ch
 			}
 
 			// Check for slashings.
-			slashings, err := s.checkSlashableAttestations(ctx, validAtts)
+			slashings, err := s.checkSlashableAttestations(ctx, currentEpoch, validAtts)
 			if err != nil {
 				log.WithError(err).Error("Could not check slashable attestations")
 				continue

@@ -9,35 +9,45 @@ import (
 	types "github.com/prysmaticlabs/eth2-types"
 	slashertypes "github.com/prysmaticlabs/prysm/beacon-chain/slasher/types"
 	ethpb "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1"
-	"github.com/prysmaticlabs/prysm/time/slots"
 	"go.opencensus.io/trace"
 )
 
 // Takes in a list of indexed attestation wrappers and returns any
 // found attester slashings to the caller.
 func (s *Service) checkSlashableAttestations(
-	ctx context.Context, atts []*slashertypes.IndexedAttestationWrapper,
+	ctx context.Context, currentEpoch types.Epoch, atts []*slashertypes.IndexedAttestationWrapper,
 ) ([]*ethpb.AttesterSlashing, error) {
-	currentEpoch := slots.EpochsSinceGenesis(s.genesisTime)
 	slashings := make([]*ethpb.AttesterSlashing, 0)
 	indices := make([]types.ValidatorIndex, 0)
 
-	// TODO(#8331): Consider using goroutines and wait groups here.
+	// Check for double votes.
+	doubleVoteSlashings, err := s.checkDoubleVotes(ctx, atts)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not check slashable double votes")
+	}
+	slashings = append(slashings, doubleVoteSlashings...)
+
+	// Group by chunk index and check for surround vote slashings.
 	groupedAtts := s.groupByValidatorChunkIndex(atts)
 	for validatorChunkIdx, batch := range groupedAtts {
+		start := time.Now()
 		attSlashings, err := s.detectAllAttesterSlashings(ctx, &chunkUpdateArgs{
 			validatorChunkIndex: validatorChunkIdx,
 			currentEpoch:        currentEpoch,
 		}, batch)
-
 		if err != nil {
-			return nil, errors.Wrap(err, "Could not detect slashable attestations")
+			return nil, err
 		}
 		slashings = append(slashings, attSlashings...)
 		indices = append(indices, s.params.validatorIndicesInChunk(validatorChunkIdx)...)
+		fmt.Printf("Took %v to process batch of size %d\n", time.Since(start), len(batch))
+		break
 	}
 	if err := s.serviceCfg.Database.SaveLastEpochWrittenForValidators(ctx, indices, currentEpoch); err != nil {
 		return nil, err
+	}
+	if len(slashings) > 0 {
+		log.WithField("numSlashings", len(slashings)).Info("Slashable attestation offenses found")
 	}
 	return slashings, nil
 }
@@ -58,42 +68,40 @@ func (s *Service) detectAllAttesterSlashings(
 	args *chunkUpdateArgs,
 	attestations []*slashertypes.IndexedAttestationWrapper,
 ) ([]*ethpb.AttesterSlashing, error) {
-	// Check for double votes.
-	doubleVoteSlashings, err := s.checkDoubleVotes(ctx, attestations)
-	if err != nil {
-		return nil, errors.Wrap(err, "could not check slashable double votes")
-	}
 
 	// Group attestations by chunk index.
 	groupedAtts := s.groupByChunkIndex(attestations)
 
-	//// Update the arrays for the change of current epoch.
-	//for validator_index in config.validator_indices_in_chunk(validator_chunk_index) {
-	//	epoch_update_for_validator(
-	//		db,
-	//		txn,
-	//		&mut updated_chunks,
-	//		validator_chunk_index,
-	//		validator_index,
-	//		current_epoch,
-	//		config,
-	//)?;
-	//}
+	// Map of updated chunks by chunk index, which will be saved at the end.
+	updatedChunks := make(map[uint64]Chunker)
 
-	// Determine the chunk indices we need to use for slashing detection.
+	// Get the validator indices in the chunk.
 	validatorIndices := s.params.validatorIndicesInChunk(args.validatorChunkIndex)
-	fmt.Printf("Num validator indices %d\n", len(validatorIndices))
-	chunkIndices, err := s.optimizedEpochUpdateForValidators(ctx, args, validatorIndices)
+
+	// Get the latest epoch written for each of the validators. If no epoch is written,
+	// set the epoch to value of 0.
+	lastCurrentEpochs, err := s.serviceCfg.Database.LastEpochWrittenForValidators(ctx, validatorIndices)
 	if err != nil {
-		return nil, errors.Wrapf(
-			err,
-			"could not determine chunks to update for validator indices %v",
-			validatorIndices,
-		)
+		return nil, errors.Wrap(err, "could not get latest epoch attested for validators")
+	}
+	lastWrittenEpochByValidator := make(map[types.ValidatorIndex]types.Epoch, len(validatorIndices))
+	for _, lastEpoch := range lastCurrentEpochs {
+		lastWrittenEpochByValidator[lastEpoch.ValidatorIndex] = lastEpoch.Epoch
+	}
+
+	// Update the min/max span chunks for the change of current epoch.
+	for _, validatorIndex := range validatorIndices {
+		if err := s.epochUpdateForValidator(ctx, args, updatedChunks, validatorIndex, lastWrittenEpochByValidator); err != nil {
+			return nil, errors.Wrapf(
+				err,
+				"could not update validator index chunks %d",
+				validatorIndex,
+			)
+		}
 	}
 
 	// Update min and max spans and retrieve any detected slashable offenses.
-	surroundingSlashings, err := s.updateSpans(ctx, chunkIndices, &chunkUpdateArgs{
+	surroundingSlashings, err := s.updateSpans(ctx, updatedChunks, &chunkUpdateArgs{
 		kind:                slashertypes.MinSpan,
 		validatorChunkIndex: args.validatorChunkIndex,
 		currentEpoch:        args.currentEpoch,
@@ -106,7 +114,7 @@ func (s *Service) detectAllAttesterSlashings(
 		)
 	}
 
-	surroundedSlashings, err := s.updateSpans(ctx, chunkIndices, &chunkUpdateArgs{
+	surroundedSlashings, err := s.updateSpans(ctx, updatedChunks, &chunkUpdateArgs{
 		kind:                slashertypes.MaxSpan,
 		validatorChunkIndex: args.validatorChunkIndex,
 		currentEpoch:        args.currentEpoch,
@@ -120,12 +128,11 @@ func (s *Service) detectAllAttesterSlashings(
 	}
 
 	// Consolidate all slashings into a slice.
-	slashings := make([]*ethpb.AttesterSlashing, 0, len(doubleVoteSlashings)+len(surroundingSlashings)+len(surroundedSlashings))
-	slashings = append(slashings, doubleVoteSlashings...)
+	slashings := make([]*ethpb.AttesterSlashing, 0, len(surroundingSlashings)+len(surroundedSlashings))
 	slashings = append(slashings, surroundingSlashings...)
 	slashings = append(slashings, surroundedSlashings...)
-	if len(slashings) > 0 {
-		log.WithField("numSlashings", len(slashings)).Info("Slashable attestation offenses found")
+	if err := s.saveUpdatedChunks(ctx, args, updatedChunks); err != nil {
+		return nil, err
 	}
 	return slashings, nil
 }
@@ -193,6 +200,40 @@ func (s *Service) checkDoubleVotesOnDisk(
 	return doubleVoteSlashings, nil
 }
 
+func (s *Service) epochUpdateForValidator(
+	ctx context.Context,
+	args *chunkUpdateArgs,
+	updatedChunks map[uint64]Chunker,
+	validatorIndex types.ValidatorIndex,
+	lastEpochWrittenByValidator map[types.ValidatorIndex]types.Epoch,
+) error {
+	epoch, ok := lastEpochWrittenByValidator[validatorIndex]
+	if !ok {
+		return nil
+	}
+	for epoch <= args.currentEpoch {
+		chunkIdx := s.params.chunkIndex(epoch)
+		currentChunk, err := s.getChunk(ctx, args, updatedChunks, chunkIdx)
+		if err != nil {
+			return err
+		}
+		for s.params.chunkIndex(epoch) == chunkIdx && epoch <= args.currentEpoch {
+			if err := setChunkRawDistance(
+				s.params,
+				currentChunk.Chunk(),
+				validatorIndex,
+				epoch,
+				currentChunk.NeutralElement(),
+			); err != nil {
+				return err
+			}
+			updatedChunks[chunkIdx] = currentChunk
+			epoch++
+		}
+	}
+	return nil
+}
+
 // Updates spans and detects any slashable attester offenses along the way.
 // 1. Determine the chunks we need to use for updating for the validator indices
 //    in a validator chunk index, then retrieve those chunks from the database.
@@ -203,21 +244,12 @@ func (s *Service) checkDoubleVotesOnDisk(
 // 3. Save the updated chunks to disk.
 func (s *Service) updateSpans(
 	ctx context.Context,
-	chunkIndices []uint64,
+	updatedChunks map[uint64]Chunker,
 	args *chunkUpdateArgs,
 	attestationsByChunkIdx map[uint64][]*slashertypes.IndexedAttestationWrapper,
 ) ([]*ethpb.AttesterSlashing, error) {
 	ctx, span := trace.StartSpan(ctx, "Slasher.updateSpans")
 	defer span.End()
-	// Load the required chunks from disk.
-	chunksByChunkIdx, err := s.loadChunks(ctx, args, chunkIndices)
-	if err != nil {
-		return nil, errors.Wrapf(
-			err,
-			"could not load chunks for chunk indices %v",
-			chunkIndices,
-		)
-	}
 
 	// Apply the attestations to the related chunks and find any
 	// slashings along the way.
@@ -244,7 +276,7 @@ func (s *Service) updateSpans(
 					ctx,
 					args,
 					validatorIndex,
-					chunksByChunkIdx,
+					updatedChunks,
 					att,
 				)
 				if err != nil {
@@ -262,102 +294,7 @@ func (s *Service) updateSpans(
 	}
 
 	// Write the updated chunks to disk.
-	return slashings, s.saveUpdatedChunks(ctx, args, chunksByChunkIdx)
-}
-
-func (s *Service) optimizedEpochUpdateForValidators(
-	ctx context.Context, args *chunkUpdateArgs, validatorIndices []types.ValidatorIndex,
-) ([]uint64, error) {
-	lastCurrentEpochs, err := s.serviceCfg.Database.LastEpochWrittenForValidators(ctx, validatorIndices)
-	if err != nil {
-		return nil, errors.Wrap(err, "could not get latest epoch attested for validators")
-	}
-	lastCurrentEpochByValidator := make(map[types.ValidatorIndex]types.Epoch, len(validatorIndices))
-	for _, valIdx := range validatorIndices {
-		lastCurrentEpochByValidator[valIdx] = 0
-	}
-	for _, lastEpoch := range lastCurrentEpochs {
-		lastCurrentEpochByValidator[lastEpoch.ValidatorIndex] = lastEpoch.Epoch
-	}
-	for _, _ = range lastCurrentEpochs {
-
-	}
-	return nil, nil
-}
-
-func (s *Service) epochUpdateForValidator(previousCurrentEpoch types.Epoch, args *chunkUpdateArgs) error {
-	epoch := previousCurrentEpoch
-	for epoch <= args.currentEpoch {
-		chunkIdx := s.params.chunkIndex(epoch)
-		//currentChunk := s.getChunk(ctx, args, chunk)
-		//while config.chunk_index(epoch) == chunk_index && epoch <= current_epoch {
-		//	current_chunk.chunk().set_raw_distance(
-		//		validator_index,
-		//		epoch,
-		//		T::neutral_element(),
-		//	config,
-		//)?;
-		//	epoch += 1;
-		//}
-		for s.params.chunkIndex(epoch) == chunkIdx && epoch <= args.currentEpoch {
-			epoch++
-		}
-	}
-	return nil
-}
-
-// For a list of validator indices, we retrieve their latest written epoch. Then, for each
-// (validator, latest epoch written) pair, we determine the chunks we need to update and
-// perform slashing detection with.
-func (s *Service) determineChunksToUpdateForValidators(
-	ctx context.Context,
-	args *chunkUpdateArgs,
-	validatorIndices []types.ValidatorIndex,
-) (chunkIndices []uint64, err error) {
-	ctx, span := trace.StartSpan(ctx, "Slasher.determineChunksToUpdateForValidators")
-	defer span.End()
-	fmt.Println("Lastepochwritten")
-	start := time.Now()
-	lastCurrentEpochs, err := s.serviceCfg.Database.LastEpochWrittenForValidators(ctx, validatorIndices)
-	if err != nil {
-		err = errors.Wrap(err, "could not get latest epoch attested for validators")
-		return
-	}
-	fmt.Printf("Lastepochwritten %v\n", time.Since(start))
-
-	// Initialize the last epoch written for each validator to 0.
-	start = time.Now()
-	fmt.Println("initialize")
-	lastCurrentEpochByValidator := make(map[types.ValidatorIndex]types.Epoch, len(validatorIndices))
-	for _, valIdx := range validatorIndices {
-		lastCurrentEpochByValidator[valIdx] = 0
-	}
-	for _, lastEpoch := range lastCurrentEpochs {
-		lastCurrentEpochByValidator[lastEpoch.ValidatorIndex] = lastEpoch.Epoch
-	}
-	fmt.Printf("initialize %v\n", time.Since(start))
-
-	// For every single validator and their last written current epoch, we determine
-	// the chunk indices we need to update based on all the chunks between the last
-	// epoch written and the current epoch, inclusive.
-	chunkIndicesToUpdate := make(map[uint64]bool)
-
-	start = time.Now()
-	fmt.Println("chunk indices to update")
-	for _, epoch := range lastCurrentEpochByValidator {
-		latestEpochWritten := epoch
-		for latestEpochWritten <= args.currentEpoch {
-			chunkIdx := s.params.chunkIndex(latestEpochWritten)
-			chunkIndicesToUpdate[chunkIdx] = true
-			latestEpochWritten++
-		}
-	}
-	fmt.Printf("chunk indices to update %v\n", time.Since(start))
-	chunkIndices = make([]uint64, 0, len(chunkIndicesToUpdate))
-	for chunkIdx := range chunkIndicesToUpdate {
-		chunkIndices = append(chunkIndices, chunkIdx)
-	}
-	return
+	return slashings, nil
 }
 
 // Checks if an incoming attestation is slashable based on the validator chunk it

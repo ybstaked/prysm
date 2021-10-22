@@ -5,10 +5,10 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
-	"time"
 
 	types "github.com/prysmaticlabs/eth2-types"
 	dbtest "github.com/prysmaticlabs/prysm/beacon-chain/db/testing"
@@ -20,6 +20,40 @@ import (
 	"github.com/prysmaticlabs/prysm/testing/require"
 	"github.com/prysmaticlabs/prysm/time/slots"
 )
+
+func TestWriteAttestations(t *testing.T) {
+	params.UsePraterConfig()
+	params.UsePraterNetworkConfig()
+	enc, err := file.ReadFileAsBytes("/tmp/blockdata/block.ssz")
+	require.NoError(t, err)
+	blk := &ethpb.SignedBeaconBlockAltair{}
+	require.NoError(t, blk.UnmarshalSSZ(enc))
+	ctx := context.Background()
+	outputDirectory := "/tmp/attestations"
+	for i, att := range blk.Block.Body.Attestations {
+		// Read the committee for the attestation slot from disk.
+		committeesFromDisk, err := readCommitteesFromDisk(att.Data.Slot)
+		require.NoError(t, err)
+		if uint64(att.Data.CommitteeIndex) >= uint64(len(committeesFromDisk)) {
+			t.Fatalf(
+				"Committee index %d bigger than the number of committees in the slot %d",
+				att.Data.CommitteeIndex,
+				len(committeesFromDisk),
+			)
+		}
+		committee := committeesFromDisk[att.Data.CommitteeIndex]
+		// Convert the attestation to indexed form.
+		idxAtt, err := attestation.ConvertToIndexed(ctx, att, committee)
+		require.NoError(t, err)
+		encodedAtt, err := idxAtt.MarshalSSZ()
+		require.NoError(t, err)
+		f, err := os.Create(filepath.Join(outputDirectory, fmt.Sprintf("%d.ssz", i)))
+		require.NoError(t, err)
+		_, err = f.Write(encodedAtt)
+		require.NoError(t, err)
+		require.NoError(t, f.Close())
+	}
+}
 
 func TestSlasherTimes(t *testing.T) {
 	params.UsePraterConfig()
@@ -63,34 +97,12 @@ func TestSlasherTimes(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NoError(t, srv.serviceCfg.Database.SaveAttestationRecordsForValidators(ctx, indexedAttWrappers))
-	//start := time.Now()
 
-	// Slashable attestations main checks.
-	t.Log("Checking slashable attestations...")
 	// Set the current epoch to the epoch the block was extracted from + 1.
 	currentEpoch := slots.ToEpoch(1512693) + 1
-	slashings := make([]*ethpb.AttesterSlashing, 0)
-	indices := make([]types.ValidatorIndex, 0)
-	groupedAtts := srv.groupByValidatorChunkIndex(indexedAttWrappers)
-	t.Logf("%d validator chunk index batches", len(groupedAtts))
-	for validatorChunkIdx, batch := range groupedAtts {
-		startInner := time.Now()
-		attSlashings, err := srv.detectAllAttesterSlashings(ctx, &chunkUpdateArgs{
-			validatorChunkIndex: validatorChunkIdx,
-			currentEpoch:        currentEpoch,
-		}, batch)
-		require.NoError(t, err)
-		slashings = append(slashings, attSlashings...)
-		indices = append(indices, srv.params.validatorIndicesInChunk(validatorChunkIdx)...)
-		t.Logf(
-			"Took %v to process batch of %d attestations grouped by validator chunk index",
-			time.Since(startInner),
-			len(batch),
-		)
-		break // Break early so we can pprof a single batch detection.
-	}
-	//require.NoError(t, srv.serviceCfg.Database.SaveLastEpochWrittenForValidators(ctx, indices, currentEpoch))
-	//t.Logf("Took %v to check slashable attestations", time.Since(start))
+	fmt.Println(currentEpoch)
+	_, err = srv.checkSlashableAttestations(ctx, currentEpoch, indexedAttWrappers)
+	require.NoError(t, err)
 }
 
 func readCommitteesFromDisk(slot types.Slot) ([][]types.ValidatorIndex, error) {
