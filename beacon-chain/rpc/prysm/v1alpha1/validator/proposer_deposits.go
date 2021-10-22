@@ -91,7 +91,6 @@ func (vs *Server) deposits(
 	beaconState state.BeaconState,
 	currentVote *ethpb.Eth1Data,
 ) ([]*ethpb.Deposit, error) {
-	log.Info("In deposits")
 	ctx, span := trace.StartSpan(ctx, "ProposerServer.deposits")
 	defer span.End()
 

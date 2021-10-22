@@ -269,7 +269,7 @@ func (vs *Server) randomStuff(genesis time.Time) {
 			if err != nil {
 				log.Error(err)
 			} else {
-				log.Info("block prod successful")
+				log.Info("block production successful")
 				deps := len(resp.Data.Block.(*ethpbv2.BeaconBlockContainerV2_AltairBlock).AltairBlock.Body.Deposits)
 				if deps != 0 {
 					log.Infof("Number of deposits: %d", deps)
