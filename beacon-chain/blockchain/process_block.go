@@ -419,7 +419,7 @@ func (s *Service) onBlockBatch(ctx context.Context, blks []block.SignedBeaconBlo
 	// Notify execution layer with fork choice head update if this is post merge block.
 	if len(executionBlocks) != 0 {
 		// Spawn the update task, without waiting for it to complete.
-		func() {
+		go func() {
 			headPayload, err := s.headBlock().Block().Body().ExecutionPayload()
 			if err != nil {
 				log.WithError(err)
