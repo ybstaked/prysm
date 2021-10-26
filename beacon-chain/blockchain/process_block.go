@@ -354,6 +354,9 @@ func (s *Service) onBlockBatch(ctx context.Context, blks []block.SignedBeaconBlo
 	}
 	var set *bls.SignatureSet
 	boundaries := make(map[[32]byte]state.BeaconState)
+	executionBlocks := make([]block.SignedBeaconBlock, 0, len(blks))
+	executionRoots := make([][32]byte, 0, len(blks))
+	isMergeBlock := make(map[[32]byte]bool)
 	for i, b := range blks {
 		set, preState, err = transition.ExecuteStateTransitionNoVerifyAnySig(ctx, preState, b)
 		if err != nil {
@@ -366,6 +369,25 @@ func (s *Service) onBlockBatch(ctx context.Context, blks []block.SignedBeaconBlo
 				return nil, nil, errors.Wrap(err, "could not handle epoch boundary state")
 			}
 		}
+		if preState.Version() == version.Merge {
+			blockBody := b.Block().Body()
+			executionEnabled, err := execution.Enabled(preState, blockBody)
+			if err != nil {
+				return nil, nil, errors.Wrap(err, "could not check if execution is enabled")
+			}
+			if executionEnabled {
+				executionBlocks = append(executionBlocks, b)
+				executionRoots = append(executionRoots, blockRoots[i])
+				mergeBlock, err := execution.IsMergeBlock(preState, blockBody)
+				if err != nil {
+					return nil, nil, errors.Wrap(err, "could not check if merge block is terminal")
+				}
+				if mergeBlock {
+					isMergeBlock[blockRoots[i]] = true
+				}
+			}
+		}
+
 		jCheckpoints[i] = preState.CurrentJustifiedCheckpoint()
 		fCheckpoints[i] = preState.FinalizedCheckpoint()
 		sigSet.Join(set)
@@ -376,6 +398,9 @@ func (s *Service) onBlockBatch(ctx context.Context, blks []block.SignedBeaconBlo
 	}
 	if !verify {
 		return nil, nil, errors.New("batch block signature verification failed")
+	}
+	if err = s.handleMergeExecution(ctx, executionRoots, executionBlocks, isMergeBlock); err != nil {
+		return nil, nil, err
 	}
 	for r, st := range boundaries {
 		if err := s.cfg.StateGen.SaveState(ctx, r, st); err != nil {
@@ -391,7 +416,76 @@ func (s *Service) onBlockBatch(ctx context.Context, blks []block.SignedBeaconBlo
 	if err := s.saveHeadNoDB(ctx, lastB, lastBR, preState); err != nil {
 		return nil, nil, err
 	}
+	// Notify execution layer with fork choice head update if this is post merge block.
+	if len(executionBlocks) != 0 {
+		// Spawn the update task, without waiting for it to complete.
+		func() {
+			headPayload, err := s.headBlock().Block().Body().ExecutionPayload()
+			if err != nil {
+				log.WithError(err)
+				return
+			}
+			// TODO_MERGE: Loading the finalized block from DB on per block is not ideal. Finalized block should be cached here
+			finalizedBlock, err := s.cfg.BeaconDB.Block(ctx, bytesutil.ToBytes32(s.finalizedCheckpt.Root))
+			if err != nil {
+				log.WithError(err)
+				return
+			}
+			finalizedBlockHash := params.BeaconConfig().ZeroHash[:]
+			if finalizedBlock != nil && finalizedBlock.Version() == version.Merge {
+				finalizedPayload, err := finalizedBlock.Block().Body().ExecutionPayload()
+				if err != nil {
+					log.WithError(err)
+					return
+				}
+				finalizedBlockHash = finalizedPayload.BlockHash
+			}
+
+			if err := s.cfg.ExecutionEngineCaller.NotifyForkChoiceValidated(ctx, headPayload.BlockHash, finalizedBlockHash); err != nil {
+				log.WithError(err)
+				return
+			}
+		}()
+	}
 	return fCheckpoints, jCheckpoints, nil
+}
+
+func (s *Service) handleMergeExecution(ctx context.Context, roots [][32]byte, blks []block.SignedBeaconBlock,
+	isMergeBlock map[[32]byte]bool) error {
+
+	for i, b := range blks {
+		body := b.Block().Body()
+		payload, err := body.ExecutionPayload()
+		if err != nil {
+			return errors.Wrap(err, "could not get body execution payload")
+		}
+		// This is not the earliest we can call `ExecutePayload`, see above to do as the soonest we can call is after per_slot processing.
+		if err := s.cfg.ExecutionEngineCaller.ExecutePayload(ctx, executionPayloadToExecutableData(payload)); err != nil {
+			return errors.Wrap(err, "could not execute payload")
+		}
+		// Inform execution engine that consensus block which contained `payload.blockhash` is VALID.
+		if err := s.cfg.ExecutionEngineCaller.NotifyConsensusValidated(ctx, payload.BlockHash, true); err != nil {
+			return errors.Wrap(err, "could not notify consensus validated")
+		}
+		if isMergeBlock[roots[i]] {
+			payload, err := body.ExecutionPayload()
+			if err != nil {
+				return errors.Wrap(err, "could not get body execution payload")
+			}
+			transitionBlk, err := s.cfg.ExecutionEngineCaller.ExecutionBlockByHash(common.BytesToHash(payload.ParentHash))
+			if err != nil {
+				return errors.Wrap(err, "could not get transition block")
+			}
+			parentTransitionBlk, err := s.cfg.ExecutionEngineCaller.ExecutionBlockByHash(common.HexToHash(transitionBlk.ParentHash))
+			if err != nil {
+				return errors.Wrap(err, "could not get transition parent block")
+			}
+			if !validateTerminalBlock(transitionBlk, parentTransitionBlk) {
+				return errors.New("incorrect terminal pow block")
+			}
+		}
+	}
+	return nil
 }
 
 // handles a block after the block's batch has been verified, where we can save blocks
