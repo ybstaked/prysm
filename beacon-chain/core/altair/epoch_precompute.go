@@ -150,7 +150,18 @@ func ProcessEpochParticipation(
 	sourceIdx := cfg.TimelySourceFlagIndex
 	headIdx := cfg.TimelyHeadFlagIndex
 	for i, b := range cp {
-		if HasValidatorFlag(b, targetIdx) && vals[i].IsActiveCurrentEpoch {
+		has, err := HasValidatorFlag(b, sourceIdx)
+		if err != nil {
+			return nil, nil, err
+		}
+		if has && vals[i].IsActiveCurrentEpoch {
+			vals[i].IsCurrentEpochAttester = true
+		}
+		has, err = HasValidatorFlag(b, targetIdx)
+		if err != nil {
+			return nil, nil, err
+		}
+		if has && vals[i].IsActiveCurrentEpoch {
 			vals[i].IsCurrentEpochTargetAttester = true
 		}
 	}
